@@ -1,19 +1,20 @@
 ---
-import BlogPost from "../../components/BlogPost.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
-    const allPosts = Object.values(
-        import.meta.glob("../../content/blog/*.md", { eager: true }),
-    );
-
+    const allPosts = await getCollection("blog");
     const uniqueTags = [
-        ...new Set(allPosts.map((post: any) => post.frontmatter.tags).flat()),
+        ...new Set(allPosts.map((post) => post.data.tags).flat()),
     ];
+
     return uniqueTags.map((tag) => {
-        const filteredPosts = allPosts.filter((post: any) =>
-            post.frontmatter.tags.includes(tag),
-        );
+        const filteredPosts = allPosts
+            .filter((post) => post.data.tags.includes(tag))
+            .sort(
+                (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+            );
+
         return {
             params: { tag },
             props: { posts: filteredPosts },
@@ -26,12 +27,39 @@ const { posts } = Astro.props;
 ---
 
 <BaseLayout pageTitle={tag}>
-    <a href="/tags">{"<"} Back to list</a>
-    <p>Posts tagged with {tag}</p>
-    <ul>
+    <div class="mb-8">
+        <a
+            href="/tags"
+            class="text-sm text-gray-400 hover:text-black dark:hover:text-white transition-colors mb-4 block"
+        >
+            &larr; All Tags
+        </a>
+        <h1 class="text-3xl font-bold">
+            <span class="text-gray-400 font-normal">#</span>{tag}
+        </h1>
+    </div>
+
+    <ul class="space-y-6">
         {
-            posts.map((post: any) => (
-                <BlogPost url={post.url} title={post.frontmatter.title} />
+            posts.map((post) => (
+                <li>
+                    <a href={`/blog/${post.slug}/`} class="group block">
+                        <div class="flex justify-between items-baseline">
+                            <h3 class="text-lg font-medium group-hover:text-blue-600 transition-colors">
+                                {post.data.title}
+                            </h3>
+                            <time
+                                datetime={post.data.pubDate.toISOString()}
+                                class="text-sm text-gray-400 font-mono shrink-0 ml-4"
+                            >
+                                {post.data.pubDate.toISOString().slice(0, 10)}
+                            </time>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                            {post.data.description}
+                        </p>
+                    </a>
+                </li>
             ))
         }
     </ul>

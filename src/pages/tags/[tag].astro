@@ -1,16 +1,16 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
-import PostListItem from "../../components/PostListItem.astro";
+import WritingListItem from "../../components/WritingListItem.astro";
 
 export async function getStaticPaths() {
-    const allPosts = await getCollection("blog");
+    const allWriting = await getCollection("writing");
     const uniqueTags = [
-        ...new Set(allPosts.map((post) => post.data.tags).flat()),
+        ...new Set(allWriting.map((post) => post.data.tags).flat()),
     ];
 
     return uniqueTags.map((tag) => {
-        const filteredPosts = allPosts
+        const filteredPosts = allWriting
             .filter((post) => post.data.tags.includes(tag))
             .sort(
                 (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
@@ -41,6 +41,6 @@ const { posts } = Astro.props;
     </div>
 
     <ul class="space-y-6">
-        {posts.map((post) => <PostListItem post={post} />)}
+        {posts.map((post) => <WritingListItem post={post} />)}
     </ul>
 </BaseLayout>

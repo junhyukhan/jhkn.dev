@@ -1,11 +1,11 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
-import PostListItem from "../components/PostListItem.astro";
+import WritingListItem from "../components/WritingListItem.astro";
 
 const pageTitle = "JHKN.DEV";
-const allPosts = await getCollection("blog");
-const recentPosts = allPosts
+const allWriting = await getCollection("writing");
+const recentWriting = allWriting
     .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
     .slice(0, 3);
 ---
@@ -25,10 +25,10 @@ const recentPosts = allPosts
     <section>
         <div class="flex justify-between items-baseline mb-8">
             <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500">
-                Recent Posts
+                Recent Writing
             </h2>
             <a
-                href="/blog"
+                href="/writing"
                 class="text-sm text-gray-500 hover:text-black dark:hover:text-white transition-colors"
             >
                 View all &rarr;
@@ -36,7 +36,7 @@ const recentPosts = allPosts
         </div>
 
         <ul class="space-y-6">
-            {recentPosts.map((post) => <PostListItem post={post} />)}
+            {recentWriting.map((post) => <WritingListItem post={post} />)}
         </ul>
     </section>
 </BaseLayout>

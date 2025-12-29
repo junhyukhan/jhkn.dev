@@ -23,5 +23,25 @@ const { Content } = await render(entry);
             </time>
         </div>
         <Content />
+        <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
+            <span
+                class="font-mono text-sm text-gray-500 mr-2 uppercase tracking-wider"
+                >Tags</span
+            >
+            <ul class="inline-flex gap-2 flex-wrap">
+                {
+                    entry.data.tags.map((tag) => (
+                        <li>
+                            <a
+                                href={`/tags/${tag}`}
+                                class="inline-block text-sm font-mono text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors no-underline"
+                            >
+                                #{tag}
+                            </a>
+                        </li>
+                    ))
+                }
+            </ul>
+        </div>
     </article>
 </BaseLayout>

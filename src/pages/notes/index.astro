@@ -1,0 +1,40 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+const pageTitle = "Notes";
+const allNotes = await getCollection("notes");
+// Sort by title or date? Notes are often evergreen, but date is fine.
+const sortedNotes = allNotes.sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+---
+
+<BaseLayout pageTitle={pageTitle}>
+	<section>
+		<h1 class="text-3xl font-bold mb-8">Notes</h1>
+		<p class="mb-8 text-gray-600 dark:text-gray-400">
+			A collection of loose thoughts, code snippets, and TILs.
+		</p>
+
+		<ul class="font-mono text-sm space-y-2">
+			{
+				sortedNotes.map((note) => (
+					<li>
+						<a
+							href={`/notes/${note.slug}/`}
+							class="flex items-baseline group"
+						>
+							<span class="text-gray-400 mr-4 shrink-0">
+								{note.data.pubDate.toISOString().slice(0, 10)}
+							</span>
+							<span class="group-hover:underline text-blue-600 dark:text-blue-400">
+								{note.data.title}
+							</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</section>
+</BaseLayout>

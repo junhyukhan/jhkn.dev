@@ -1,0 +1,14 @@
+---
+import TagPill from "./TagPill.astro";
+const { tags } = Astro.props;
+---
+
+<ul class="inline-flex gap-2 flex-wrap">
+    {
+        tags.map((tag: string) => (
+            <li>
+                <TagPill tag={tag} />
+            </li>
+        ))
+    }
+</ul>

@@ -1,7 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import TagPill from "../../components/TagPill.astro";
+import TagList from "../../components/TagList.astro";
 
 export async function getStaticPaths() {
     const blogEntries = await getCollection("blog");
@@ -29,15 +29,7 @@ const { Content } = await render(entry);
                 class="font-mono text-sm text-gray-500 mr-2 uppercase tracking-wider"
                 >Tags</span
             >
-            <ul class="inline-flex gap-2 flex-wrap">
-                {
-                    entry.data.tags.map((tag) => (
-                        <li>
-                            <TagPill tag={tag} />
-                        </li>
-                    ))
-                }
-            </ul>
+            <TagList tags={entry.data.tags} />
         </div>
     </article>
 </BaseLayout>

@@ -1,5 +1,7 @@
 ---
 import "../styles/global.css";
+import Navigation from "../components/Navigation.astro";
+import Footer from "../components/Footer.astro";
 const { pageTitle } = Astro.props;
 ---
 
@@ -15,27 +17,11 @@ const { pageTitle } = Astro.props;
 		class="font-sans text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-950"
 	>
 		<main class="max-w-2xl mx-auto px-4 py-8">
-			<nav class="flex justify-between mb-12 items-baseline">
-				<a href="/" class="font-bold text-xl">JHKN.DEV</a>
-				<div class="space-x-4 text-sm font-medium text-gray-500">
-					<a
-						href="/blog"
-						class="hover:text-black dark:hover:text-white transition-colors"
-						>Blog</a
-					>
-					<a
-						href="/notes"
-						class="hover:text-black dark:hover:text-white transition-colors"
-						>Notes</a
-					>
-				</div>
-			</nav>
+			<Navigation />
 
 			<slot />
 
-			<footer class="mt-20 text-sm text-gray-400 font-mono">
-				&copy; {new Date().getFullYear()} JHKN.DEV
-			</footer>
+			<Footer />
 		</main>
 	</body>
 </html>

@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
+import NoteListItem from "../../components/NoteListItem.astro";
 
 const pageTitle = "Notes";
 const allNotes = await getCollection("notes");
@@ -18,23 +19,7 @@ const sortedNotes = allNotes.sort(
 		</p>
 
 		<ul class="font-mono text-sm space-y-2">
-			{
-				sortedNotes.map((note) => (
-					<li>
-						<a
-							href={`/notes/${note.slug}/`}
-							class="flex items-baseline group"
-						>
-							<span class="text-gray-400 mr-4 shrink-0">
-								{note.data.pubDate.toISOString().slice(0, 10)}
-							</span>
-							<span class="group-hover:underline text-blue-600 dark:text-blue-400">
-								{note.data.title}
-							</span>
-						</a>
-					</li>
-				))
-			}
+			{sortedNotes.map((note) => <NoteListItem note={note} />)}
 		</ul>
 	</section>
 </BaseLayout>

@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import TagPill from "../../components/TagPill.astro";
 
 export async function getStaticPaths() {
     const blogEntries = await getCollection("blog");
@@ -32,12 +33,7 @@ const { Content } = await render(entry);
                 {
                     entry.data.tags.map((tag) => (
                         <li>
-                            <a
-                                href={`/tags/${tag}`}
-                                class="inline-block text-sm font-mono text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors no-underline"
-                            >
-                                #{tag}
-                            </a>
+                            <TagPill tag={tag} />
                         </li>
                     ))
                 }

@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
+import PostListItem from "../components/PostListItem.astro";
 
 const pageTitle = "JHKN.DEV";
 const allPosts = await getCollection("blog");
@@ -35,30 +36,7 @@ const recentPosts = allPosts
         </div>
 
         <ul class="space-y-6">
-            {
-                recentPosts.map((post) => (
-                    <li>
-                        <a href={`/blog/${post.slug}/`} class="group block">
-                            <div class="flex justify-between items-baseline">
-                                <h3 class="text-lg font-medium group-hover:text-blue-600 transition-colors">
-                                    {post.data.title}
-                                </h3>
-                                <time
-                                    datetime={post.data.pubDate.toISOString()}
-                                    class="text-sm text-gray-400 font-mono shrink-0 ml-4"
-                                >
-                                    {post.data.pubDate
-                                        .toISOString()
-                                        .slice(0, 10)}
-                                </time>
-                            </div>
-                            <p class="text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                                {post.data.description}
-                            </p>
-                        </a>
-                    </li>
-                ))
-            }
+            {recentPosts.map((post) => <PostListItem post={post} />)}
         </ul>
     </section>
 </BaseLayout>

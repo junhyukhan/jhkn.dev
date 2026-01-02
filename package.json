@@ -6,7 +6,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "deploy-preview": "wrangler pages dev dist",
+    "deploy": "wrangler pages deploy dist"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
@@ -19,5 +21,8 @@
     "remark-wiki-link": "^2.0.1",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "wrangler": "^4.54.0"
   }
 }

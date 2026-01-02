@@ -12,13 +12,17 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+import { getNoteTitle } from "../../utils/note";
+const title = getNoteTitle(entry);
 ---
 
-<BaseLayout pageTitle={entry.data.title}>
+<BaseLayout pageTitle={title}>
     <article class="prose prose-slate dark:prose-invert max-w-none">
         <div class="mb-8 border-b pb-4">
-            <h1 class="text-2xl font-bold mb-1">{entry.data.title}</h1>
-            <!-- Notes might not display date prominently, implies 'evergreen' or 'rough' -->
+            <h1 class="text-2xl font-bold mb-1">{title}</h1>
+            <span class="text-sm text-gray-500 font-mono">
+                {entry.data.created.toISOString().slice(0, 10)}
+            </span>
         </div>
         <div class="font-mono text-sm leading-relaxed">
             <Content />

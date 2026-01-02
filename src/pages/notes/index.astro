@@ -5,10 +5,27 @@ import NoteListItem from "../../components/NoteListItem.astro";
 
 const pageTitle = "Notes";
 const allNotes = await getCollection("notes");
-// Sort by title or date? Notes are often evergreen, but date is fine.
-const sortedNotes = allNotes.sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+
+const groupedNotes = allNotes.reduce(
+	(acc, note) => {
+		const parts = note.slug.split("/");
+		const category = parts.length > 1 ? parts[0] : "General";
+		if (!acc[category]) acc[category] = [];
+		acc[category].push(note);
+		return acc;
+	},
+	{} as Record<string, typeof allNotes>,
 );
+
+Object.keys(groupedNotes).forEach((category) => {
+	groupedNotes[category].sort(
+		(a, b) =>
+			new Date(b.data.created).valueOf() -
+			new Date(a.data.created).valueOf(),
+	);
+});
+
+const categories = Object.keys(groupedNotes).sort();
 ---
 
 <BaseLayout pageTitle={pageTitle}>
@@ -18,8 +35,21 @@ const sortedNotes = allNotes.sort(
 			A collection of loose thoughts, code snippets, and TILs.
 		</p>
 
-		<ul class="font-mono text-sm space-y-2">
-			{sortedNotes.map((note) => <NoteListItem note={note} />)}
-		</ul>
+		<div class="space-y-10">
+			{
+				categories.map((category) => (
+					<div>
+						<h2 class="text-lg font-bold mb-4 capitalize text-gray-800 dark:text-gray-200">
+							{category}
+						</h2>
+						<ul class="font-mono text-sm space-y-2">
+							{groupedNotes[category].map((note) => (
+								<NoteListItem note={note} />
+							))}
+						</ul>
+					</div>
+				))
+			}
+		</div>
 	</section>
 </BaseLayout>

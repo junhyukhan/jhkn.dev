@@ -15,9 +15,11 @@ const writing = defineCollection({
 const notes = defineCollection({
     type: "content",
     schema: z.object({
-        title: z.string(),
-        pubDate: z.date(), // Optional for notes? Keeping it required for now based on plan "looser schema" but date is usually good.
-        tags: z.array(z.string()).default([]),
+        created: z.coerce.date(),
+        edited: z.coerce.date().optional(),
+        tags: z.array(z.string()).nullable().transform(t => t || []).optional().default([]),
+        title: z.string().optional(),
+        // pubDate: z.date().optional(),
     }),
 });
 

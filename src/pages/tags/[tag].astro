@@ -1,37 +1,39 @@
 ---
+import NoteList from "../../components/NoteList.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
-import WritingListItem from "../../components/WritingListItem.astro";
 
 export async function getStaticPaths() {
-    const allWriting = await getCollection("writing");
+    const allNotes = await getCollection("notes");
     const uniqueTags = [
-        ...new Set(allWriting.map((post) => post.data.tags).flat()),
+        ...new Set(allNotes.map((note) => note.data.tags).flat()),
     ];
 
     return uniqueTags.map((tag) => {
-        const filteredPosts = allWriting
-            .filter((post) => post.data.tags.includes(tag))
+        const filteredNotes = allNotes
+            .filter((note) => note.data.tags.includes(tag))
             .sort(
-                (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+                (a, b) =>
+                    (b.data.edited || b.data.created).valueOf() -
+                    (a.data.edited || a.data.created).valueOf(),
             );
 
         return {
             params: { tag },
-            props: { posts: filteredPosts },
+            props: { notes: filteredNotes },
         };
     });
 }
 
 const { tag } = Astro.params;
-const { posts } = Astro.props;
+const { notes } = Astro.props;
 ---
 
 <BaseLayout pageTitle={tag}>
     <div class="mb-8">
         <a
             href="/tags"
-            class="text-sm text-gray-400 hover:text-black dark:hover:text-white transition-colors mb-4 block"
+            class="text-sm text-gray-400 hover:text-black transition-colors mb-4 block"
         >
             &larr; All Tags
         </a>
@@ -40,7 +42,5 @@ const { posts } = Astro.props;
         </h1>
     </div>
 
-    <ul class="space-y-6">
-        {posts.map((post) => <WritingListItem post={post} />)}
-    </ul>
+    <NoteList notes={notes} />
 </BaseLayout>

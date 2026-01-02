@@ -1,7 +1,7 @@
 ---
+import NoteList from "../../components/NoteList.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
-import NoteListItem from "../../components/NoteListItem.astro";
 
 const pageTitle = "Notes";
 const allNotes = await getCollection("notes");
@@ -29,25 +29,22 @@ const categories = Object.keys(groupedNotes).sort();
 ---
 
 <BaseLayout pageTitle={pageTitle}>
-	<section>
-		<h1 class="text-3xl font-bold mb-8">Notes</h1>
-		<p class="mb-8 text-gray-600 dark:text-gray-400">
-			A collection of loose thoughts, code snippets, and TILs.
+	<section class="mb-12">
+		<h1 class="text-3xl font-bold mb-4">Notes</h1>
+		<p class="mb-8 text-gray-600">
+			A collection of raw thoughts, snippets, and learnings. These are
+			less polished than blog posts and more like a digital garden.
 		</p>
 
-		<div class="space-y-10">
+		<div class="space-y-12">
 			{
-				categories.map((category) => (
-					<div>
-						<h2 class="text-lg font-bold mb-4 capitalize text-gray-800 dark:text-gray-200">
+				Object.entries(groupedNotes).map(([category, notes]) => (
+					<section>
+						<h2 class="text-xl font-bold mb-4 capitalize text-gray-800 border-b border-gray-200 pb-2">
 							{category}
 						</h2>
-						<ul class="font-mono text-sm space-y-2">
-							{groupedNotes[category].map((note) => (
-								<NoteListItem note={note} />
-							))}
-						</ul>
-					</div>
+						<NoteList notes={notes} />
+					</section>
 				))
 			}
 		</div>

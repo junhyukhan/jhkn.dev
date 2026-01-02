@@ -1,0 +1,14 @@
+---
+import type { CollectionEntry } from "astro:content";
+import NoteListItem from "./NoteListItem.astro";
+
+interface Props {
+    notes: CollectionEntry<"notes">[];
+}
+
+const { notes } = Astro.props;
+---
+
+<ul class="font-mono text-sm space-y-2">
+    {notes.map((note) => <NoteListItem note={note} />)}
+</ul>

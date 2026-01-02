@@ -16,7 +16,7 @@ const { Content } = await render(entry);
 ---
 
 <BaseLayout pageTitle={entry.data.title}>
-    <article class="prose prose-slate dark:prose-invert max-w-none">
+    <article class="prose prose-slate max-w-none">
         <div class="mb-8 not-prose">
             <h1 class="text-3xl font-bold mb-2">{entry.data.title}</h1>
             <time class="text-sm text-gray-500 font-mono">
@@ -24,7 +24,7 @@ const { Content } = await render(entry);
             </time>
         </div>
         <Content />
-        <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
+        <div class="mt-8 pt-8 border-t border-gray-200">
             <span
                 class="font-mono text-sm text-gray-500 mr-2 uppercase tracking-wider"
                 >Tags</span

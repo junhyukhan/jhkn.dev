@@ -4,10 +4,8 @@ import { getCollection } from "astro:content";
 import TagPill from "../../components/TagPill.astro";
 
 const pageTitle = "Tags";
-const allWriting = await getCollection("writing");
-const tags = [
-    ...new Set(allWriting.map((post) => post.data.tags).flat()),
-].sort();
+const allNotes = await getCollection("notes");
+const tags = [...new Set(allNotes.map((post) => post.data.tags).flat())].sort();
 ---
 
 <BaseLayout pageTitle={pageTitle}>

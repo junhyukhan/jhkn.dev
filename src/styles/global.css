@@ -22,10 +22,34 @@ a:hover {
   text-decoration: underline;
 }
 
-/* Dark mode overrides if needed, but sticking to minimalist white for now as per plan "Index Card" aesthetic */
-@media (prefers-color-scheme: dark) {
-  html {
-    /* Optional: support dark mode if user wants, but plan said "Index Card aesthetic: White background" */
-    /* We will keep it light for now to strictly follow "Index Card" recommendation unless requested otherwise */
-  }
+/* Wiki Links Styling */
+.prose a.internal {
+  @apply no-underline bg-blue-500/10 text-blue-600 px-[0.2em] rounded-[0.2em] transition-all duration-200;
+}
+
+.prose a.internal:hover {
+  @apply bg-blue-500/20 no-underline;
+}
+
+.prose a.new {
+  @apply text-inherit no-underline pointer-events-none cursor-text;
+}
+
+/* Inline Code Styling */
+.prose code {
+  @apply font-mono text-[0.9em] bg-gray-100 px-1.5 py-0.5 rounded text-gray-800 font-medium;
+}
+
+.prose code::before,
+.prose code::after {
+  content: none;
+}
+
+/* Code Block Styling */
+.prose pre {
+  @apply !bg-gray-100 rounded-lg p-4 my-6 overflow-x-auto border border-gray-200;
+}
+
+.prose pre code {
+  @apply bg-transparent p-0 font-normal text-sm;
 }

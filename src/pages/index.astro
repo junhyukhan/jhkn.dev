@@ -1,42 +1,36 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
-import WritingListItem from "../components/WritingListItem.astro";
+import NoteList from "../components/NoteList.astro";
 
 const pageTitle = "JHKN.DEV";
-const allWriting = await getCollection("writing");
-const recentWriting = allWriting
-    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+const allNotes = await getCollection("notes");
+const recentNotes = allNotes
+    .sort((a, b) => b.data.created.valueOf() - a.data.created.valueOf())
     .slice(0, 3);
 ---
 
 <BaseLayout pageTitle={pageTitle}>
-    <section class="mb-16">
-        <h1 class="text-3xl font-bold mb-4">
-            Hello. I am a software engineer building AI platforms and tinkering
-            with home labs.
-        </h1>
-        <p class="text-gray-600 dark:text-gray-400">
-            I write about what I learn. Mostly Go, TypeScript, and
-            infrastructure.
+    <section class="mb-12">
+        <h1 class="text-3xl font-bold mb-4">Hello.</h1>
+        <p class="text-gray-600">
+            This is where I document what I learn and build.
         </p>
     </section>
 
     <section>
         <div class="flex justify-between items-baseline mb-8">
             <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500">
-                Recent Writing
+                Recent Notes
             </h2>
             <a
-                href="/writing"
-                class="text-sm text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+                href="/notes"
+                class="text-sm text-gray-500 hover:text-black transition-colors"
             >
                 View all &rarr;
             </a>
         </div>
 
-        <ul class="space-y-6">
-            {recentWriting.map((post) => <WritingListItem post={post} />)}
-        </ul>
+        <NoteList notes={recentNotes} />
     </section>
 </BaseLayout>

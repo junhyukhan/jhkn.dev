@@ -12,15 +12,27 @@ const writing = defineCollection({
     }),
 });
 
-const notes = defineCollection({
-    type: "content",
-    schema: z.object({
-        created: z.coerce.date(),
-        edited: z.coerce.date().optional(),
-        tags: z.array(z.string()).nullable().transform(t => t || []).optional().default([]),
-        title: z.string().optional(),
-        // pubDate: z.date().optional(),
-    }),
+// Common schema for note-like content
+const noteSchema = z.object({
+    created: z.coerce.date(),
+    edited: z.coerce.date().optional(),
+    tags: z.array(z.string()).nullable().transform(t => t || []).optional().default([]),
+    title: z.string().optional(),
 });
 
-export const collections = { writing, notes };
+const notes = defineCollection({
+    type: "content",
+    schema: noteSchema,
+});
+
+const leetcode = defineCollection({
+    type: "content",
+    schema: noteSchema,
+});
+
+const quotes = defineCollection({
+    type: "content",
+    schema: noteSchema,
+});
+
+export const collections = { writing, notes, leetcode, quotes };

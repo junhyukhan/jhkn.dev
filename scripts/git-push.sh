@@ -17,8 +17,3 @@ fi
 # -v: verbose
 # --delete: CRITICAL. If a file is deleted in iCloud, delete it in Git repo.
 rsync -av --delete --exclude="config.ts" "$ICLOUD_PATH" "$REPO_CONTENT_PATH"
-
-# 3. Git Push
-git add .
-git commit -m "Content Sync: $(date +'%Y-%m-%d %H:%M')"
-git push origin main

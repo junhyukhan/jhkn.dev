@@ -1,6 +1,6 @@
 import type { CollectionEntry } from "astro:content";
 
-export function getNoteTitle(note: CollectionEntry<"notes">): string {
+export function getNoteTitle(note: { data: { title?: string }, id: string }): string {
     if (note.data.title) {
         return note.data.title;
     }

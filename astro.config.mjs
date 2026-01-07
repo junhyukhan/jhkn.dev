@@ -10,17 +10,20 @@ import path from "path";
 // Helper to recursively find all markdown files
 /**
  * @param {string} dir
- * @param {string} [baseDir]
+ * @param {string} baseDir
+ * @param {string} urlPrefix
  */
-function getNotePermalinks(dir, baseDir = dir) {
+function getCollectionPermalinks(dir, baseDir = dir, urlPrefix = "") {
   /** @type {Record<string, string>} */
   let results = {};
+  if (!fs.existsSync(dir)) return results;
+
   const list = fs.readdirSync(dir);
   list.forEach(file => {
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);
     if (stat && stat.isDirectory()) {
-      Object.assign(results, getNotePermalinks(filePath, baseDir));
+      Object.assign(results, getCollectionPermalinks(filePath, baseDir, urlPrefix));
     } else {
       if (file.endsWith(".md") || file.endsWith(".mdx")) {
         // Generate slug: relative path, remove extension, lowercase, replace spaces with dashes (standard Astro/slugify)
@@ -31,22 +34,23 @@ function getNotePermalinks(dir, baseDir = dir) {
           .replace(/[^\w\s\-\/]/g, "") // Remove punctuation like ' and . but keep slashes
           .replace(/\s+/g, "-"); // Replace spaces with dashes
 
-        // Map "Page Name" -> "slug"
-        // "Page Name" comes from filename without extension.
+        // Map "Page Name" -> "/urlPrefix/slug"
         const name = file.replace(/\.(md|mdx)$/, "");
-        // Also map the full relative path if user types "dev/Page Name"? 
-        // For now, support "Page Name" (Obsidian behavior).
-        results[name] = slug;
-        // Support "folder/Page Name" style too for disambiguation?
-        // This simple map implies last-write-wins for duplicate filenames in different folders.
-        // This is a known trade-off.
+
+        const fullPath = urlPrefix ? `/${urlPrefix}/${slug}` : `/${slug}`;
+        results[name] = fullPath;
       }
     }
   });
   return results;
 }
 
-const notePermalinks = getNotePermalinks("./src/content/notes");
+const notePermalinks = {
+  ...getCollectionPermalinks("./src/content/notes", "./src/content/notes", "notes"),
+  ...getCollectionPermalinks("./src/content/leetcode", "./src/content/leetcode", "leetcode"),
+  ...getCollectionPermalinks("./src/content/quotes", "./src/content/quotes", "quotes")
+};
+
 const validPermalinks = Object.values(notePermalinks);
 
 // https://astro.build/config
@@ -59,14 +63,26 @@ export default defineConfig({
         // Map [[Link]] to specific slugs using our scanned list
         pageResolver: (/** @type {string} */ name) => {
           // 1. Try exact match from our map
-          if (notePermalinks[name]) return [notePermalinks[name]];
-          // 2. Fallback: try slugifying the name directly
-          return [name.trim().toLowerCase().replace(/[^\w\s\-\/]/g, "").replace(/\s+/g, "-")];
+          if (notePermalinks[name]) {
+            // Return the path relative to root, but without leading slash for some environments if needed, 
+            // but usually pageResolver returns slugs. 
+            // IMPORTANT: remark-wiki-link expects the "slug" that matches something in `permalinks`.
+            // Since our `validPermalinks` are full paths like "/notes/foo", we return that.
+            return [notePermalinks[name].replace(/^\//, "")];
+          }
+          // 2. Fallback: try slugifying the name directly and assume it's a note (legacy/default behavior)
+          // Or better, return empty if not found so it shows as broken?
+          // Let's keep a fallback for safety, defaulting to /notes/ logic if purely inferred
+          const slug = name.trim().toLowerCase().replace(/[^\w\s\-\/]/g, "").replace(/\s+/g, "-");
+          return [`notes/${slug}`];
         },
         hrefTemplate: (/** @type {string} */ permalink) => {
-          // If the permalink is already a full path (from our map), prepend /notes/
-          // If it's a relative path, ensure it starts with /notes/
-          if (permalink.startsWith("/notes/")) return permalink;
+          // If the permalink is already a full path (from our map), return it as is (ensure leading slash)
+          if (permalink.startsWith("/")) return permalink;
+          if (permalink.startsWith("notes/") || permalink.startsWith("leetcode/") || permalink.startsWith("quotes/")) {
+            return `/${permalink}`;
+          }
+          // Fallback
           return `/notes/${permalink}`;
         }
       }]

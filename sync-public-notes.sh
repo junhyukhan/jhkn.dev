@@ -1,7 +1,17 @@
 #!/bin/bash
 # 1. Define paths
-# In .env
+# Define the path to your .env file
+ENV_FILE="./.env"
 
+# Check if the file exists
+if [ -f "$ENV_FILE" ]; then
+    # Source the .env file to load variables into the current shell session
+    source "$ENV_FILE"
+    echo "Environment variables loaded from $ENV_FILE"
+else
+    echo "$ENV_FILE not found. Exiting."
+    exit 1
+fi
 # 2. Sync (The Magic Step)
 # -a: archive (recursive)
 # -v: verbose
@@ -11,4 +21,4 @@ rsync -av --delete "$ICLOUD_PATH" "$REPO_CONTENT_PATH"
 # 3. Git Push
 git add .
 git commit -m "Content Sync: $(date +'%Y-%m-%d %H:%M')"
-# git push origin main
+git push origin main

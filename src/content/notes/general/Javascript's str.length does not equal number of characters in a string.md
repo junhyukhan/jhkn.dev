@@ -5,7 +5,7 @@ tags:
 created: 2025-06-16 03:24
 edited: 2025-06-16 03:24
 ---
-In my current project at work (LG ensol mmd), I had to rewrite some logic that got input from the user, and split up the input into chunks before inserting in the DB.
+In my current project at work (An LG subsidiary), I had to rewrite some logic that got input from the user, and split up the input into chunks before inserting in the DB.
 
 The columns in the DB (mssql) is of type `nvarchar(4000)` which can store 8000 bytes.
 

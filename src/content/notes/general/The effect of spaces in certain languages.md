@@ -1,6 +1,5 @@
 ---
 tags:
-  - gemini
   - llm
   - cs
   - crafting-interpreters

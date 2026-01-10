@@ -1,6 +1,5 @@
 ---
 tags:
-  - gemini
   - llm
   - question
   - cs

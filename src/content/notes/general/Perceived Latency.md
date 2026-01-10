@@ -1,7 +1,6 @@
 ---
 tags:
   - cs
-  - gemini
   - llm
   - question
 created: 2025-08-21 10:00 

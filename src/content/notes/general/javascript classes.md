@@ -1,12 +1,11 @@
 ---
 tags: 
   - cs
+  - js
 created: 2025-09-12 02:34
 edited: 2025-09-12 02:34
 ---
 they are prototypes.
-
-
 
 A class is a blueprint for create object instances, a **prototype IS an instance** that other object instances delegate work to, a **prototype** is not a blueprint, it actually exists, it **is** there.
 

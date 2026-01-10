@@ -21,19 +21,17 @@ npm run publish      # Clean, build, and deploy (full publish flow)
 
 ### Content Collections
 
-Four content collections defined in `src/content/config.ts`:
+Two content collections defined in `src/content/config.ts`:
 - **writing**: Blog posts with title, pubDate, description, author, tags, draft
-- **notes**: Digital garden notes synced from iCloud
-- **leetcode**: LeetCode problem solutions
-- **quotes**: Quote collection
+- **notes**: Digital garden notes synced from iCloud (includes subdirectories for LeetCode problems and quotes)
 
-Notes, leetcode, and quotes share a common schema: `created`, `edited` (optional), `tags`, `title` (optional, falls back to filename).
+The notes collection has a schema: `created`, `edited` (optional), `tags`, `title` (optional, falls back to filename). Content is organized under `src/content/notes/` with subdirectories like `leetcode/` and `quotes/`.
 
 ### Wiki Links
 
 The site uses `remark-wiki-link` for `[[internal links]]`. The plugin configuration in `astro.config.mjs`:
-- Scans content directories at build time to generate valid permalinks
-- Maps `[[Note Name]]` to `/notes/note-name`, `[[LeetCode/Problem]]` to `/leetcode/problem`, etc.
+- Scans `src/content/notes/` directory (including subdirectories) at build time to generate valid permalinks
+- Maps `[[Note Name]]` to `/notes/note-name`, `[[LeetCode/Problem]]` to `/notes/leetcode/problem`, etc.
 - Unrecognized links fall back to `/notes/` path
 
 ### Content Sync

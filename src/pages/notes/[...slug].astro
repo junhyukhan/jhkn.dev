@@ -2,22 +2,23 @@
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getNoteTitle } from "../../utils/note";
-import { getBacklinksForNote } from "../../utils/backlinks";
+import { buildBacklinksMap } from "../../utils/backlinks";
 import TagList from "../../components/TagList.astro";
 import Backlinks from "../../components/Backlinks.astro";
 
 export async function getStaticPaths() {
     const notesEntries = await getCollection("notes");
+    const backlinksMap = buildBacklinksMap(notesEntries);
+
     return notesEntries.map((entry) => ({
         params: { slug: entry.slug },
-        props: { entry, allNotes: notesEntries },
+        props: { entry, backlinks: backlinksMap.get(entry.id) || [] },
     }));
 }
 
-const { entry, allNotes } = Astro.props;
+const { entry, backlinks } = Astro.props;
 const { Content } = await render(entry);
 const title = getNoteTitle(entry);
-const backlinks = getBacklinksForNote(entry, allNotes);
 ---
 
 <BaseLayout pageTitle={title}>

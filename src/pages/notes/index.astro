@@ -23,14 +23,14 @@ const sortedKeys = getSortedGroupKeys(groupedNotes);
 			{
 				sortedKeys.map((key) => (
 					<section>
-						<span class="font-mono text-xs text-gray-400 uppercase tracking-wider">
+						<span class="font-mono text-xs text-gray-600 uppercase tracking-wider">
 							{groupedNotes[key].displayName}
 						</span>
-						<ul class="font-mono text-sm space-y-1 mt-2">
+						<ul class="font-mono text-sm space-y-1 mt-1">
 							{groupedNotes[key].notes.map((note) => (
 								<li>
 									<a href={`/${note.collection}/${note.slug}/`} class="flex items-baseline group">
-										<span class="text-gray-400 mr-4 shrink-0">
+										<span class="text-xs text-gray-400 mr-4 shrink-0">
 											{note.data.created ? new Date(note.data.created).toISOString().slice(0, 10) : ""}
 										</span>
 										<span class="group-hover:underline text-blue-600">

@@ -20,12 +20,17 @@ export function extractWikiLinks(content: string): string[] {
 }
 
 /**
- * Normalize a string for comparison (lowercase, remove punctuation, trim)
+ * Normalize a string for comparison
+ * - Lowercase
+ * - Collapse whitespace
+ * - Trim
+ * Preserves meaningful punctuation (., +, #, etc.) to avoid false matches
+ * e.g., "C++" and "C" remain distinct
  */
 function normalize(str: string): string {
   return str
     .toLowerCase()
-    .replace(/[^\w\s]/g, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -51,29 +56,42 @@ function linkMatchesNote(linkTarget: string, note: Note): boolean {
 }
 
 /**
- * Get all notes that link to the given note
+ * Build a map of all backlinks for all notes (O(n²) but computed once at build time)
+ * Returns a Map where keys are note IDs and values are arrays of notes that link to them
  */
-export function getBacklinksForNote(targetNote: Note, allNotes: Note[]): Note[] {
-  const backlinks: Note[] = [];
+export function buildBacklinksMap(allNotes: Note[]): Map<string, Note[]> {
+  const backlinksMap = new Map<string, Note[]>();
 
+  // Initialize empty arrays for all notes
   for (const note of allNotes) {
-    // Skip self-references
-    if (note.id === targetNote.id) continue;
+    backlinksMap.set(note.id, []);
+  }
 
-    const links = extractWikiLinks(note.body || "");
-    for (const link of links) {
-      if (linkMatchesNote(link, targetNote)) {
-        backlinks.push(note);
-        break; // Only add each note once even if it links multiple times
+  // For each note, find what it links to and add itself as a backlink
+  for (const sourceNote of allNotes) {
+    const links = extractWikiLinks(sourceNote.body || "");
+
+    for (const targetNote of allNotes) {
+      // Skip self-references
+      if (sourceNote.id === targetNote.id) continue;
+
+      // Check if sourceNote links to targetNote
+      for (const link of links) {
+        if (linkMatchesNote(link, targetNote)) {
+          backlinksMap.get(targetNote.id)!.push(sourceNote);
+          break; // Only add once even if multiple links
+        }
       }
     }
   }
 
-  // Sort by created date (newest first)
-  backlinks.sort(
-    (a, b) =>
-      new Date(b.data.created).valueOf() - new Date(a.data.created).valueOf()
-  );
+  // Sort each backlinks array by created date (newest first)
+  for (const [, backlinks] of backlinksMap) {
+    backlinks.sort(
+      (a, b) =>
+        new Date(b.data.created).valueOf() - new Date(a.data.created).valueOf()
+    );
+  }
 
-  return backlinks;
+  return backlinksMap;
 }

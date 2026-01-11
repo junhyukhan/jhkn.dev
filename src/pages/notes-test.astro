@@ -34,7 +34,7 @@ const notesData = sortedNotes.map(note => ({
 }));
 ---
 
-<BaseLayout pageTitle={pageTitle}>
+<BaseLayout pageTitle={pageTitle} noindex={true}>
 	<section class="mb-12">
 		<h1 class="text-3xl font-bold mb-4">Tag Filter UI Test</h1>
 		<p class="mb-8 text-gray-600">
@@ -234,7 +234,15 @@ const notesData = sortedNotes.map(note => ({
 		selectedTagsB.forEach(tag => {
 			const pill = document.createElement('span');
 			pill.className = 'inline-flex items-center gap-1 px-2 py-1 text-sm font-mono rounded-full bg-blue-100 text-blue-700';
-			pill.innerHTML = `${tag} <button class="remove-tag-b hover:text-blue-900" data-tag="${tag}">&times;</button>`;
+
+			const tagText = document.createTextNode(tag + ' ');
+			const removeBtn = document.createElement('button');
+			removeBtn.className = 'remove-tag-b hover:text-blue-900';
+			removeBtn.dataset.tag = tag;
+			removeBtn.textContent = '×';
+
+			pill.appendChild(tagText);
+			pill.appendChild(removeBtn);
 			container.appendChild(pill);
 		});
 

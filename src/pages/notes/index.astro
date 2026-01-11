@@ -1,31 +1,14 @@
 ---
-import NoteList from "../../components/NoteList.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
+import { groupNotesByTopic, getSortedGroupKeys } from "../../utils/noteGrouping";
+import { getNoteTitle } from "../../utils/note";
 
 const pageTitle = "Notes";
 const allNotes = await getCollection("notes");
 
-const groupedNotes = allNotes.reduce(
-	(acc, note) => {
-		const parts = note.slug.split("/");
-		const category = parts.length > 1 ? parts[0] : "General";
-		if (!acc[category]) acc[category] = [];
-		acc[category].push(note);
-		return acc;
-	},
-	{} as Record<string, typeof allNotes>,
-);
-
-Object.keys(groupedNotes).forEach((category) => {
-	groupedNotes[category].sort(
-		(a, b) =>
-			new Date(b.data.created).valueOf() -
-			new Date(a.data.created).valueOf(),
-	);
-});
-
-const categories = Object.keys(groupedNotes).sort();
+const groupedNotes = groupNotesByTopic(allNotes);
+const sortedKeys = getSortedGroupKeys(groupedNotes);
 ---
 
 <BaseLayout pageTitle={pageTitle}>
@@ -36,14 +19,27 @@ const categories = Object.keys(groupedNotes).sort();
 			less polished than blog posts and more like a digital garden.
 		</p>
 
-		<div class="space-y-12">
+		<div class="space-y-6">
 			{
-				Object.entries(groupedNotes).map(([category, notes]) => (
+				sortedKeys.map((key) => (
 					<section>
-						<h2 class="text-xl font-bold mb-4 capitalize text-gray-800 border-b border-gray-200 pb-2">
-							{category}
-						</h2>
-						<NoteList notes={notes} />
+						<span class="font-mono text-xs text-gray-600 uppercase tracking-wider">
+							{groupedNotes[key].displayName}
+						</span>
+						<ul class="font-mono text-sm space-y-1 mt-1">
+							{groupedNotes[key].notes.map((note) => (
+								<li>
+									<a href={`/${note.collection}/${note.slug}/`} class="flex items-baseline group">
+										<span class="text-xs text-gray-400 mr-4 shrink-0">
+											{note.data.created ? new Date(note.data.created).toISOString().slice(0, 10) : ""}
+										</span>
+										<span class="group-hover:underline text-blue-600">
+											{getNoteTitle(note)}
+										</span>
+									</a>
+								</li>
+							))}
+						</ul>
 					</section>
 				))
 			}

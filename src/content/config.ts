@@ -18,6 +18,7 @@ const noteSchema = z.object({
     edited: z.coerce.date().optional(),
     tags: z.array(z.string()).nullable().transform(t => t || []).optional().default([]),
     title: z.string().optional(),
+    priority: z.number().optional().default(0),
 });
 
 const notes = defineCollection({

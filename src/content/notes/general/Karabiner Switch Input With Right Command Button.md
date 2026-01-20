@@ -4,6 +4,7 @@ created: 2023-09-18 09:01
 edited: 2023-09-18 09:01
 tags:
   - productivity
+priority: 10
 ---
 
 ### The problem
@@ -32,50 +33,42 @@ All I had to do was import a similar 'switch key if pressed alone' rule made by 
 
 Here's the code (json):
 
-```
-
+```json
 {
-
-"title": "Right command to f18 if alone (to redefine language switch to right command)",
-
-"rules": [
-
-{
-
-"description": "Right command to f18 if alone",
-
-"manipulators": [
-
-{
-
-"type": "basic",
-
-"from": {
-
-"key_code": "right_command",
-
-"modifiers": { "optional": ["any"] }
-
-},
-
-"to": [{ "key_code": "right_command", "lazy": true }],
-
-"to_if_alone": [
-
-{ "key_code": "f18", "modifiers": ["right_gui"] }
-
-]
-
+  "title": "Right command to f18 if alone (to redefine language switch to right command)",
+  "rules": [
+    {
+      "description": "Right command to f18 if alone",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "right_command",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "right_command",
+              "lazy": true
+            }
+          ],
+          "to_if_alone": [
+            {
+              "key_code": "f18",
+              "modifiers": [
+                "right_gui"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }
-
-]
-
-}
-
-]
-
-}
-
 ```
 
   

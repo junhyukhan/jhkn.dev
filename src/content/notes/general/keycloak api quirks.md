@@ -5,6 +5,7 @@ tags:
   - api
 created: 2026-01-02 13:25
 edited: 2026-01-02 13:25
+priority: 30
 ---
 
 - [keycloak api docs](https://www.keycloak.org/docs-api/latest/rest-api/index.html)

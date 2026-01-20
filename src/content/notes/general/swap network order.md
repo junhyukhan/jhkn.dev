@@ -3,6 +3,7 @@ tags:
   - cs
 created: 2025-07-01 13:31
 edited: 2025-07-01 13:31
+priority: 20
 ---
 At work, I had a situation where I had to switch between WIFI and ethernet on my mac. 
 To do this, I created a script to change the network order in my mac.
@@ -10,7 +11,7 @@ To do this, I created a script to change the network order in my mac.
 `--ordernetworkservices` needs the names of all active network services in order separated by whitespace. If the service name had a whitespace, the entire name must be enclosed in quotation marks.
 
 At first I hardcoded the network order list
-```
+```bash
 "Wi-Fi"
 "USB 10/100/1000 LAN"
 "Thunderbolt Bridge"
@@ -20,7 +21,7 @@ And created two variables in a bash script named `ORDER_WIFI_FIRST`, and `ORDER_
 However, the first problem I faced was when I shared the script with a coworker. If the coworker had another network connected, or if the name of the networks are different than mine, they would have to manually change the content of the script.
 
 First try: (hardcoded values)
-```
+```bash
 #!/bin/bash
 
 # Get the network service order
@@ -57,7 +58,7 @@ fi
 ```
 
 Second try: (dynamically create the network services array)
-```
+```bash
 #!/bin/bash
 
 # Get the current list of network services in order

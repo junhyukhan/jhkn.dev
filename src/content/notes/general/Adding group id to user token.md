@@ -4,6 +4,7 @@ tags:
   - keycloak
 created: 2026-01-13 19:41
 edited: 2026-01-13 19:41
+priority: 20
 ---
 As of now in [[Keycloak]], there is no easy way to add a list of the user’s list to the session token.
 

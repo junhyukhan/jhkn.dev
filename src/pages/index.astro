@@ -2,9 +2,12 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
 import NoteList from "../components/NoteList.astro";
+import { getFeaturedNotes } from "../utils/noteGrouping";
 
 const pageTitle = "JHKN.DEV";
 const allNotes = await getCollection("notes");
+
+const featuredNotes = getFeaturedNotes(allNotes);
 const recentNotes = allNotes
     .sort((a, b) => b.data.created.valueOf() - a.data.created.valueOf())
     .slice(0, 3);
@@ -17,6 +20,18 @@ const recentNotes = allNotes
             This is where I document what I learn and build.
         </p>
     </section>
+
+    {featuredNotes.length > 0 && (
+        <section class="mb-16">
+            <div class="flex justify-between items-baseline mb-8">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500">
+                    Featured Work
+                </h2>
+            </div>
+
+            <NoteList notes={featuredNotes} />
+        </section>
+    )}
 
     <section>
         <div class="flex justify-between items-baseline mb-8">

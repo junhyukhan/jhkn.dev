@@ -33,3 +33,40 @@ Taking insight from the above repository, I was able to make the keyboard and mo
   
 
 With a click of a button, I was able to simultaneously switch the connected device for both my mouse and keyboard. All this without using logitech's proprietary solution, logitech flow which was pretty buggy.
+
+Folder Structure:
+```shell
+$ tree betterlogi.app
+betterlogi.app
+- Contents
+- MacOS
+- betterlogi
+PkgInfo
+3 directories, 2 files
+
+$ cat betterlogi.app/Contents/Pkglnfo
+APPL????%
+```
+
+The script:
+```bash
+#!/bin/bash
+
+# MX Master 3s bluetooth
+
+#./usr/local/bin/hidapitester --vidpid 046D:B034 --usage Ox0202 --usagePage OxFF43 --open --length 20 --send-output Ox11,0xFF,0xOa,0x1b,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+
+# Bolt reciever
+
+# MX Master 3s
+
+#./usr/local/bin/hidapitester --vidpid 046D:C548 --usage 0x0001 --usagePage OxFF00 --open --length 7 --send-output 0x10,0x02,0x0a,0x014,0x01,0x00,0x00
+
+# LIFT
+
+./usr/local/bin/hidapitester --vidpid 046D:C548 --usage 0x0001 -- usagePage OxFF00 --open --length 7 --send-output 0x10,0x03,0x0a,0x014,0x01,0x00,0x00
+
+# MX keys
+
+./usr/local/bin/hidapitester --vidpid 046D:C548 --usage 0x0001 --usagePage OxFF00 --open --length 7 --send-output 0x10,0x01,0x0a,0x1b,0x01,0x00,0x00
+```

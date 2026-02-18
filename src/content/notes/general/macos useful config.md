@@ -1,9 +1,9 @@
 ---
-tags: 
+tags:
   - cs
   - config
   - macos
-created-date: 2023-09-18 09:00
+created: 2023-09-18 09:00
 ---
 #tips 
 # useful MAC configuration settings using terminal commands

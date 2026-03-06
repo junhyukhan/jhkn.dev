@@ -40,7 +40,7 @@ const totalCount = sortedNotes.length;
 				<input
 					id="search"
 					type="text"
-					placeholder="Search notes..."
+					placeholder="Search by title..."
 					autocomplete="off"
 					class="w-full font-mono text-sm border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-gray-400"
 				/>
@@ -82,7 +82,7 @@ const totalCount = sortedNotes.length;
 				<input
 					id="search-mobile"
 					type="text"
-					placeholder="Search notes..."
+					placeholder="Search by title..."
 					autocomplete="off"
 					class="w-full font-mono text-sm border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-gray-400"
 				/>
@@ -130,28 +130,29 @@ const totalCount = sortedNotes.length;
 			<!-- Notes list (all rendered at build time; JS shows/hides/sorts) -->
 			<ul id="notes-list" class="font-mono text-sm space-y-1">
 				{
-					sortedNotes.map((note) => (
-						<li
-							data-tags={JSON.stringify(note.data.tags || [])}
-							data-date={note.data.created ? new Date(note.data.created).toISOString().slice(0, 10) : ""}
-							data-title={getNoteTitle(note)}
-						>
-							<a
-								href={`/${note.collection}/${note.slug}/`}
-								class="flex items-baseline group"
+					sortedNotes.map((note) => {
+						const title = getNoteTitle(note);
+						const date = note.data.created ? new Date(note.data.created).toISOString().slice(0, 10) : "";
+						return (
+							<li
+								data-tags={JSON.stringify(note.data.tags || [])}
+								data-date={date}
+								data-title={title}
 							>
-								<span class="text-xs text-gray-400 mr-4 shrink-0">
-									{note.data.created
-										? new Date(note.data.created).toISOString().slice(0, 10)
-										: ""}
-								</span>
-								<span class="group-hover:underline text-blue-600">
-									{getNoteTitle(note)}
-								</span>
-							</a>
-						</li>
-					))
+								<a
+									href={`/${note.collection}/${note.slug}/`}
+									class="flex items-baseline group"
+								>
+									<span class="text-xs text-gray-400 mr-4 shrink-0">{date}</span>
+									<span class="group-hover:underline text-blue-600">{title}</span>
+								</a>
+							</li>
+						);
+					})
 				}
+				<li id="no-results" class="hidden font-mono text-sm text-gray-400">
+					No notes match your filters.
+				</li>
 			</ul>
 		</section>
 
@@ -163,13 +164,16 @@ const totalCount = sortedNotes.length;
 	let query = "";
 	let sortKey = "date";
 	let sortDir = "desc";
+	let prevSortKey = sortKey;
+	let prevSortDir = sortDir;
 	const selectedTags = new Set<string>();
 
 	const notesList = document.getElementById("notes-list") as HTMLUListElement;
 	const noteCount = document.getElementById("note-count") as HTMLParagraphElement;
+	const noResults = document.getElementById("no-results") as HTMLLIElement;
 
 	// Cache all item data once — avoids repeated DOM reads and JSON.parse on every filter call
-	const allItems = Array.from(notesList.querySelectorAll<HTMLLIElement>("li")).map((li) => ({
+	const allItems = Array.from(notesList.querySelectorAll<HTMLLIElement>("li:not(#no-results)")).map((li) => ({
 		el: li,
 		tags: JSON.parse(li.dataset.tags || "[]") as string[],
 		date: li.dataset.date ?? "",
@@ -178,18 +182,25 @@ const totalCount = sortedNotes.length;
 
 	function applyFilters() {
 		const q = query.toLowerCase();
+		const sortChanged = sortKey !== prevSortKey || sortDir !== prevSortDir;
 
-		const sorted = [...allItems].sort((a, b) => {
-			if (sortKey === "date") {
-				const diff = a.date.localeCompare(b.date);
-				return sortDir === "desc" ? -diff : diff;
-			} else {
-				const diff = a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
-				return sortDir === "asc" ? diff : -diff;
-			}
-		});
-
-		sorted.forEach(({ el }) => notesList.appendChild(el));
+		let sorted: typeof allItems;
+		if (sortChanged) {
+			sorted = [...allItems].sort((a, b) => {
+				if (sortKey === "date") {
+					const diff = a.date.localeCompare(b.date);
+					return sortDir === "desc" ? -diff : diff;
+				} else {
+					const diff = a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+					return sortDir === "asc" ? diff : -diff;
+				}
+			});
+			sorted.forEach(({ el }) => notesList.appendChild(el));
+			prevSortKey = sortKey;
+			prevSortDir = sortDir;
+		} else {
+			sorted = allItems;
+		}
 
 		let visible = 0;
 		sorted.forEach(({ el, tags, title }) => {
@@ -204,6 +215,7 @@ const totalCount = sortedNotes.length;
 			}
 		});
 
+		noResults.classList.toggle("hidden", visible > 0);
 		noteCount.textContent = `${visible} note${visible !== 1 ? "s" : ""}`;
 	}
 

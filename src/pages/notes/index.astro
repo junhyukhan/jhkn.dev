@@ -1,48 +1,298 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
-import { groupNotesByTopic, getSortedGroupKeys } from "../../utils/noteGrouping";
 import { getNoteTitle } from "../../utils/note";
 
 const pageTitle = "Notes";
 const allNotes = await getCollection("notes");
 
-const groupedNotes = groupNotesByTopic(allNotes);
-const sortedKeys = getSortedGroupKeys(groupedNotes);
+// Collect unique tags sorted by frequency
+const tagCounts: Record<string, number> = {};
+allNotes.forEach((note) => {
+	(note.data.tags || []).forEach((tag) => {
+		tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+	});
+});
+const sortedTags = Object.entries(tagCounts)
+	.sort((a, b) => b[1] - a[1])
+	.map(([tag, count]) => ({ tag, count }));
+
+// Pre-sort by date desc (default view)
+const sortedNotes = [...allNotes].sort(
+	(a, b) =>
+		new Date(b.data.created).valueOf() - new Date(a.data.created).valueOf()
+);
+
+const totalCount = sortedNotes.length;
 ---
 
 <BaseLayout pageTitle={pageTitle}>
-	<section class="mb-12">
-		<h1 class="text-3xl font-bold mb-4">Notes</h1>
-		<p class="mb-8 text-gray-600">
-			A collection of raw thoughts, snippets, and learnings. These are
-			less polished than blog posts and more like a digital garden.
-		</p>
+	<div class="relative mb-12">
 
-		<div class="space-y-6">
-			{
-				sortedKeys.map((key) => (
-					<section>
-						<span class="font-mono text-xs text-gray-600 uppercase tracking-wider">
-							{groupedNotes[key].displayName}
-						</span>
-						<ul class="font-mono text-sm space-y-1 mt-1">
-							{groupedNotes[key].notes.map((note) => (
-								<li>
-									<a href={`/${note.collection}/${note.slug}/`} class="flex items-baseline group">
-										<span class="text-xs text-gray-400 mr-4 shrink-0">
-											{note.data.created ? new Date(note.data.created).toISOString().slice(0, 10) : ""}
-										</span>
-										<span class="group-hover:underline text-blue-600">
-											{getNoteTitle(note)}
-										</span>
-									</a>
-								</li>
-							))}
-						</ul>
-					</section>
-				))
-			}
-		</div>
-	</section>
+		<!--
+			Desktop sidebar (xl+): absolutely positioned in the left whitespace,
+			does not displace the notes column at all. The inner div is sticky so
+			it follows the viewport while scrolling through notes.
+			At xl (1280px) the left whitespace is ~296px; sidebar + gap = ~240px — fits.
+		-->
+		<aside class="hidden xl:block absolute top-0 right-full h-full pr-8">
+			<div class="sticky top-8 w-52 space-y-5">
+				<input
+					id="search"
+					type="text"
+					placeholder="Search by title..."
+					autocomplete="off"
+					class="w-full font-mono text-sm border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-gray-400"
+				/>
+				<div class="font-mono text-xs text-gray-500">
+					<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Sort</div>
+					<div class="flex flex-wrap gap-x-3 gap-y-1">
+						<button class="sort-btn underline text-gray-700" data-sort="date" data-dir="desc" aria-pressed="true">Date ↓</button>
+						<button class="sort-btn" data-sort="date" data-dir="asc" aria-pressed="false">Date ↑</button>
+						<button class="sort-btn" data-sort="title" data-dir="asc" aria-pressed="false">A→Z</button>
+						<button class="sort-btn" data-sort="title" data-dir="desc" aria-pressed="false">Z→A</button>
+					</div>
+				</div>
+				<div class="font-mono text-xs">
+					<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Tags</div>
+					<div class="flex flex-wrap gap-1 max-h-80 overflow-y-auto">
+						<button class="tag-all-btn text-left px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200" aria-pressed="true">
+							All
+						</button>
+						{sortedTags.map(({ tag, count }) => (
+							<button
+								class="tag-btn text-left px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200"
+								data-tag={tag}
+								aria-pressed="false"
+							>
+								{tag} <span class="text-gray-400">({count})</span>
+							</button>
+						))}
+					</div>
+				</div>
+			</div>
+		</aside>
+
+		<!-- Mobile + lg: collapsible at top, hidden once the xl sidebar takes over -->
+		<details class="xl:hidden border border-gray-200 rounded px-3 py-2 mb-6">
+			<summary class="font-mono text-xs text-gray-500 cursor-pointer select-none py-1">
+				Filters &amp; search
+			</summary>
+			<div class="mt-3 pb-1 space-y-4">
+				<input
+					id="search-mobile"
+					type="text"
+					placeholder="Search by title..."
+					autocomplete="off"
+					class="w-full font-mono text-sm border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-gray-400"
+				/>
+				<div class="font-mono text-xs text-gray-500">
+					<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Sort</div>
+					<div class="flex flex-wrap gap-x-3 gap-y-1">
+						<button class="sort-btn underline text-gray-700" data-sort="date" data-dir="desc" aria-pressed="true">Date ↓</button>
+						<button class="sort-btn" data-sort="date" data-dir="asc" aria-pressed="false">Date ↑</button>
+						<button class="sort-btn" data-sort="title" data-dir="asc" aria-pressed="false">A→Z</button>
+						<button class="sort-btn" data-sort="title" data-dir="desc" aria-pressed="false">Z→A</button>
+					</div>
+				</div>
+				<div class="font-mono text-xs">
+					<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Tags</div>
+					<div class="flex flex-wrap gap-1 max-h-48 overflow-y-auto">
+						<button class="tag-all-btn text-left px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200" aria-pressed="true">
+							All
+						</button>
+						{sortedTags.map(({ tag, count }) => (
+							<button
+								class="tag-btn text-left px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200"
+								data-tag={tag}
+								aria-pressed="false"
+							>
+								{tag} <span class="text-gray-400">({count})</span>
+							</button>
+						))}
+					</div>
+				</div>
+			</div>
+		</details>
+
+		<!-- Notes: occupies the full max-w-2xl column, position unchanged from original -->
+		<section>
+			<h1 class="text-3xl font-bold mb-4">Notes</h1>
+			<p class="mb-6 text-gray-600">
+				A collection of raw thoughts, snippets, and learnings. These are
+				less polished than blog posts and more like a digital garden.
+			</p>
+
+			<p id="note-count" class="font-mono text-xs text-gray-400 mb-3">
+				{totalCount} notes
+			</p>
+
+			<!-- Notes list (all rendered at build time; JS shows/hides/sorts) -->
+			<ul id="notes-list" class="font-mono text-sm space-y-1">
+				{
+					sortedNotes.map((note) => {
+						const title = getNoteTitle(note);
+						const date = note.data.created ? new Date(note.data.created).toISOString().slice(0, 10) : "";
+						return (
+							<li
+								data-tags={JSON.stringify(note.data.tags || [])}
+								data-date={date}
+								data-title={title}
+							>
+								<a
+									href={`/${note.collection}/${note.slug}/`}
+									class="flex items-baseline group"
+								>
+									<span class="text-xs text-gray-400 mr-4 shrink-0">{date}</span>
+									<span class="group-hover:underline text-blue-600">{title}</span>
+								</a>
+							</li>
+						);
+					})
+				}
+				<li id="no-results" class="hidden font-mono text-sm text-gray-400">
+					No notes match your filters.
+				</li>
+			</ul>
+		</section>
+
+	</div>
 </BaseLayout>
+
+<script>
+	// State
+	let query = "";
+	let sortKey = "date";
+	let sortDir = "desc";
+	let prevSortKey = sortKey;
+	let prevSortDir = sortDir;
+	const selectedTags = new Set<string>();
+
+	const notesList = document.getElementById("notes-list") as HTMLUListElement;
+	const noteCount = document.getElementById("note-count") as HTMLParagraphElement;
+	const noResults = document.getElementById("no-results") as HTMLLIElement;
+
+	// Cache all item data once — avoids repeated DOM reads and JSON.parse on every filter call
+	const allItems = Array.from(notesList.querySelectorAll<HTMLLIElement>("li:not(#no-results)")).map((li) => ({
+		el: li,
+		tags: JSON.parse(li.dataset.tags || "[]") as string[],
+		date: li.dataset.date ?? "",
+		title: (li.dataset.title ?? "").toLowerCase(),
+	}));
+
+	function applyFilters() {
+		const q = query.toLowerCase();
+		const sortChanged = sortKey !== prevSortKey || sortDir !== prevSortDir;
+
+		let sorted: typeof allItems;
+		if (sortChanged) {
+			sorted = [...allItems].sort((a, b) => {
+				if (sortKey === "date") {
+					const diff = a.date.localeCompare(b.date);
+					return sortDir === "desc" ? -diff : diff;
+				} else {
+					const diff = a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+					return sortDir === "asc" ? diff : -diff;
+				}
+			});
+			sorted.forEach(({ el }) => notesList.appendChild(el));
+			prevSortKey = sortKey;
+			prevSortDir = sortDir;
+		} else {
+			sorted = allItems;
+		}
+
+		let visible = 0;
+		sorted.forEach(({ el, tags, title }) => {
+			const matchesTag = selectedTags.size === 0 || tags.some((t) => selectedTags.has(t));
+			const matchesQuery = !q || title.includes(q);
+
+			if (matchesTag && matchesQuery) {
+				el.style.display = "";
+				visible++;
+			} else {
+				el.style.display = "none";
+			}
+		});
+
+		noResults.classList.toggle("hidden", visible > 0);
+		noteCount.textContent = `${visible} note${visible !== 1 ? "s" : ""}`;
+	}
+
+	// Search inputs — desktop (#search) and mobile (#search-mobile), kept in sync
+	let debounceTimer: ReturnType<typeof setTimeout>;
+	(["search", "search-mobile"] as const).forEach((id) => {
+		const el = document.getElementById(id) as HTMLInputElement | null;
+		if (!el) return;
+		el.addEventListener("input", (e) => {
+			clearTimeout(debounceTimer);
+			const otherId = id === "search" ? "search-mobile" : "search";
+			const other = document.getElementById(otherId) as HTMLInputElement | null;
+			if (other) other.value = (e.target as HTMLInputElement).value;
+			debounceTimer = setTimeout(() => {
+				query = (e.target as HTMLInputElement).value;
+				applyFilters();
+			}, 150);
+		});
+	});
+
+	// Sort buttons — present in both panels; sync highlight + aria-pressed across both
+	document.querySelectorAll<HTMLButtonElement>(".sort-btn").forEach((btn) => {
+		btn.addEventListener("click", () => {
+			sortKey = btn.dataset.sort ?? "date";
+			sortDir = btn.dataset.dir ?? "desc";
+			document.querySelectorAll<HTMLButtonElement>(".sort-btn").forEach((b) => {
+				b.classList.remove("underline", "text-gray-700");
+				b.setAttribute("aria-pressed", "false");
+			});
+			document
+				.querySelectorAll<HTMLButtonElement>(
+					`.sort-btn[data-sort="${sortKey}"][data-dir="${sortDir}"]`
+				)
+				.forEach((b) => {
+					b.classList.add("underline", "text-gray-700");
+					b.setAttribute("aria-pressed", "true");
+				});
+			applyFilters();
+		});
+	});
+
+	// "All" tag buttons (one per panel)
+	document.querySelectorAll<HTMLButtonElement>(".tag-all-btn").forEach((btn) => {
+		btn.addEventListener("click", () => {
+			selectedTags.clear();
+			updateTagStyles();
+			applyFilters();
+		});
+	});
+
+	// Individual tag buttons
+	document.querySelectorAll<HTMLButtonElement>(".tag-btn").forEach((btn) => {
+		btn.addEventListener("click", () => {
+			const tag = btn.dataset.tag!;
+			if (selectedTags.has(tag)) selectedTags.delete(tag);
+			else selectedTags.add(tag);
+			updateTagStyles();
+			applyFilters();
+		});
+	});
+
+	function updateTagStyles() {
+		const isAll = selectedTags.size === 0;
+		document.querySelectorAll<HTMLButtonElement>(".tag-all-btn").forEach((btn) => {
+			btn.setAttribute("aria-pressed", String(isAll));
+			btn.classList.toggle("bg-blue-100", isAll);
+			btn.classList.toggle("text-blue-700", isAll);
+			btn.classList.toggle("bg-gray-100", !isAll);
+			btn.classList.toggle("text-gray-600", !isAll);
+		});
+		document.querySelectorAll<HTMLButtonElement>(".tag-btn").forEach((btn) => {
+			const active = selectedTags.has(btn.dataset.tag!);
+			btn.setAttribute("aria-pressed", String(active));
+			btn.classList.toggle("bg-blue-100", active);
+			btn.classList.toggle("text-blue-700", active);
+			btn.classList.toggle("bg-gray-100", !active);
+			btn.classList.toggle("text-gray-600", !active);
+		});
+	}
+</script>

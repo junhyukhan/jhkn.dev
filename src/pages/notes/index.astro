@@ -47,21 +47,21 @@ const totalCount = sortedNotes.length;
 				<div class="font-mono text-xs text-gray-500">
 					<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Sort</div>
 					<div class="flex flex-wrap gap-x-3 gap-y-1">
-						<button class="sort-btn underline text-gray-700" data-sort="date" data-dir="desc" aria-pressed="true">Date ↓</button>
-						<button class="sort-btn" data-sort="date" data-dir="asc" aria-pressed="false">Date ↑</button>
-						<button class="sort-btn" data-sort="title" data-dir="asc" aria-pressed="false">A→Z</button>
-						<button class="sort-btn" data-sort="title" data-dir="desc" aria-pressed="false">Z→A</button>
+						<button class="sort-btn touch-manipulation underline text-gray-700" data-sort="date" data-dir="desc" aria-pressed="true">Date ↓</button>
+						<button class="sort-btn touch-manipulation" data-sort="date" data-dir="asc" aria-pressed="false">Date ↑</button>
+						<button class="sort-btn touch-manipulation" data-sort="title" data-dir="asc" aria-pressed="false">A→Z</button>
+						<button class="sort-btn touch-manipulation" data-sort="title" data-dir="desc" aria-pressed="false">Z→A</button>
 					</div>
 				</div>
 				<div class="font-mono text-xs">
 					<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Tags</div>
 					<div class="flex flex-wrap gap-1 max-h-80 overflow-y-auto">
-						<button class="tag-all-btn text-left px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200" aria-pressed="true">
+						<button class="tag-all-btn touch-manipulation text-left px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200" aria-pressed="true">
 							All
 						</button>
 						{sortedTags.map(({ tag, count }) => (
 							<button
-								class="tag-btn text-left px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200"
+								class="tag-btn touch-manipulation text-left px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200"
 								data-tag={tag}
 								aria-pressed="false"
 							>
@@ -73,48 +73,6 @@ const totalCount = sortedNotes.length;
 			</div>
 		</aside>
 
-		<!-- Mobile + lg: collapsible at top, hidden once the xl sidebar takes over -->
-		<details class="xl:hidden border border-gray-200 rounded px-3 py-2 mb-6">
-			<summary class="font-mono text-xs text-gray-500 cursor-pointer select-none py-1">
-				Filters &amp; search
-			</summary>
-			<div class="mt-3 pb-1 space-y-4">
-				<input
-					id="search-mobile"
-					type="text"
-					placeholder="Search by title..."
-					autocomplete="off"
-					class="w-full font-mono text-sm border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-gray-400"
-				/>
-				<div class="font-mono text-xs text-gray-500">
-					<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Sort</div>
-					<div class="flex flex-wrap gap-x-3 gap-y-1">
-						<button class="sort-btn underline text-gray-700" data-sort="date" data-dir="desc" aria-pressed="true">Date ↓</button>
-						<button class="sort-btn" data-sort="date" data-dir="asc" aria-pressed="false">Date ↑</button>
-						<button class="sort-btn" data-sort="title" data-dir="asc" aria-pressed="false">A→Z</button>
-						<button class="sort-btn" data-sort="title" data-dir="desc" aria-pressed="false">Z→A</button>
-					</div>
-				</div>
-				<div class="font-mono text-xs">
-					<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Tags</div>
-					<div class="flex flex-wrap gap-1 max-h-48 overflow-y-auto">
-						<button class="tag-all-btn text-left px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200" aria-pressed="true">
-							All
-						</button>
-						{sortedTags.map(({ tag, count }) => (
-							<button
-								class="tag-btn text-left px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200"
-								data-tag={tag}
-								aria-pressed="false"
-							>
-								{tag} <span class="text-gray-400">({count})</span>
-							</button>
-						))}
-					</div>
-				</div>
-			</div>
-		</details>
-
 		<!-- Notes: occupies the full max-w-2xl column, position unchanged from original -->
 		<section>
 			<h1 class="text-3xl font-bold mb-4">Notes</h1>
@@ -122,6 +80,48 @@ const totalCount = sortedNotes.length;
 				A collection of raw thoughts, snippets, and learnings. These are
 				less polished than blog posts and more like a digital garden.
 			</p>
+
+			<!-- Mobile + lg: collapsible below header, hidden once the xl sidebar takes over -->
+			<details class="xl:hidden border border-gray-200 rounded px-3 py-2 mb-6">
+				<summary class="font-mono text-xs text-gray-500 cursor-pointer select-none py-1 touch-manipulation">
+					Filters &amp; search
+				</summary>
+				<div class="mt-3 pb-1 space-y-4">
+					<input
+						id="search-mobile"
+						type="text"
+						placeholder="Search by title..."
+						autocomplete="off"
+						class="w-full font-mono text-sm border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-gray-400"
+					/>
+					<div class="font-mono text-xs text-gray-500">
+						<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Sort</div>
+						<div class="flex flex-wrap gap-x-3 gap-y-1">
+							<button class="sort-btn touch-manipulation underline text-gray-700" data-sort="date" data-dir="desc" aria-pressed="true">Date ↓</button>
+							<button class="sort-btn touch-manipulation" data-sort="date" data-dir="asc" aria-pressed="false">Date ↑</button>
+							<button class="sort-btn touch-manipulation" data-sort="title" data-dir="asc" aria-pressed="false">A→Z</button>
+							<button class="sort-btn touch-manipulation" data-sort="title" data-dir="desc" aria-pressed="false">Z→A</button>
+						</div>
+					</div>
+					<div class="font-mono text-xs">
+						<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Tags</div>
+						<div class="flex flex-wrap gap-1 max-h-48 overflow-y-auto">
+							<button class="tag-all-btn touch-manipulation text-left px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200" aria-pressed="true">
+								All
+							</button>
+							{sortedTags.map(({ tag, count }) => (
+								<button
+									class="tag-btn touch-manipulation text-left px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200"
+									data-tag={tag}
+									aria-pressed="false"
+								>
+									{tag} <span class="text-gray-400">({count})</span>
+								</button>
+							))}
+						</div>
+					</div>
+				</div>
+			</details>
 
 			<p id="note-count" class="font-mono text-xs text-gray-400 mb-3">
 				{totalCount} notes
@@ -253,7 +253,7 @@ const totalCount = sortedNotes.length;
 					b.classList.add("underline", "text-gray-700");
 					b.setAttribute("aria-pressed", "true");
 				});
-			applyFilters();
+			requestAnimationFrame(() => applyFilters());
 		});
 	});
 
@@ -262,7 +262,7 @@ const totalCount = sortedNotes.length;
 		btn.addEventListener("click", () => {
 			selectedTags.clear();
 			updateTagStyles();
-			applyFilters();
+			requestAnimationFrame(() => applyFilters());
 		});
 	});
 
@@ -273,7 +273,7 @@ const totalCount = sortedNotes.length;
 			if (selectedTags.has(tag)) selectedTags.delete(tag);
 			else selectedTags.add(tag);
 			updateTagStyles();
-			applyFilters();
+			requestAnimationFrame(() => applyFilters());
 		});
 	});
 

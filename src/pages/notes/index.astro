@@ -41,88 +41,137 @@ const sortedNotes = [...allNotes].sort(
 const totalCount = sortedNotes.length;
 ---
 
-<BaseLayout pageTitle={pageTitle}>
-	<section class="mb-12">
-		<h1 class="text-3xl font-bold mb-4">Notes</h1>
-		<p class="mb-6 text-gray-600">
-			A collection of raw thoughts, snippets, and learnings. These are
-			less polished than blog posts and more like a digital garden.
-		</p>
+<BaseLayout pageTitle={pageTitle} wide={true}>
+	<!--
+		flex-col on mobile: aside (filters) renders first → appears above notes.
+		lg:flex-row on desktop: aside moves to the right via order utilities.
+	-->
+	<div class="flex flex-col lg:flex-row lg:gap-10 lg:items-start">
 
-		<!-- Search -->
-		<input
-			id="search"
-			type="text"
-			placeholder="Search notes..."
-			autocomplete="off"
-			class="w-full font-mono text-sm border border-gray-200 rounded px-3 py-2 mb-4 focus:outline-none focus:border-gray-400"
-		/>
+		<!-- SIDEBAR: filters — top on mobile (collapsed), right on desktop (sticky) -->
+		<aside class="order-1 lg:order-2 lg:w-64 lg:shrink-0 lg:sticky lg:top-8 lg:self-start mb-6 lg:mb-0">
 
-		<!-- Sort controls -->
-		<div class="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-gray-500 mb-4">
-			<span>Sort:</span>
-			<button class="sort-btn underline text-gray-700" data-sort="date" data-dir="desc">Date ↓</button>
-			<button class="sort-btn" data-sort="date" data-dir="asc">Date ↑</button>
-			<button class="sort-btn" data-sort="title" data-dir="asc">Title A→Z</button>
-			<button class="sort-btn" data-sort="title" data-dir="desc">Title Z→A</button>
-		</div>
+			<!-- Mobile: collapsible <details> — zero JS, works everywhere -->
+			<details class="lg:hidden border border-gray-200 rounded px-3 py-2">
+				<summary class="font-mono text-xs text-gray-500 cursor-pointer select-none py-1">
+					Filters &amp; search
+				</summary>
+				<div class="mt-3 pb-1 space-y-4">
+					<input
+						id="search-mobile"
+						type="text"
+						placeholder="Search notes..."
+						autocomplete="off"
+						class="w-full font-mono text-sm border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-gray-400"
+					/>
+					<div class="font-mono text-xs text-gray-500">
+						<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Sort</div>
+						<div class="flex flex-wrap gap-x-3 gap-y-1">
+							<button class="sort-btn underline text-gray-700" data-sort="date" data-dir="desc">Date ↓</button>
+							<button class="sort-btn" data-sort="date" data-dir="asc">Date ↑</button>
+							<button class="sort-btn" data-sort="title" data-dir="asc">A→Z</button>
+							<button class="sort-btn" data-sort="title" data-dir="desc">Z→A</button>
+						</div>
+					</div>
+					<div class="font-mono text-xs">
+						<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Tags</div>
+						<div class="flex flex-wrap gap-1 max-h-48 overflow-y-auto">
+							<button class="tag-all-btn text-left px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200">
+								All
+							</button>
+							{sortedTags.map(({ tag, count }) => (
+								<button
+									class="tag-btn text-left px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200"
+									data-tag={tag}
+								>
+									{tag} <span class="text-gray-400">({count})</span>
+								</button>
+							))}
+						</div>
+					</div>
+				</div>
+			</details>
 
-		<!-- Tag multi-select -->
-		<div class="flex flex-wrap gap-2 mb-5">
-			<button
-				id="tag-all"
-				class="px-2 py-1 text-xs font-mono rounded bg-blue-100 text-blue-700 hover:bg-blue-200"
-			>
-				All
-			</button>
-			{
-				sortedTags.map(({ tag, count }) => (
-					<button
-						class="tag-btn px-2 py-1 text-xs font-mono rounded bg-gray-100 text-gray-600 hover:bg-gray-200"
-						data-tag={tag}
-					>
-						{tag}{" "}
-						<span class="text-gray-400">({count})</span>
-					</button>
-				))
-			}
-		</div>
+			<!-- Desktop: always visible, vertical layout -->
+			<div class="hidden lg:flex lg:flex-col lg:gap-5">
+				<input
+					id="search"
+					type="text"
+					placeholder="Search notes..."
+					autocomplete="off"
+					class="w-full font-mono text-sm border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-gray-400"
+				/>
+				<div class="font-mono text-xs text-gray-500">
+					<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Sort</div>
+					<div class="flex flex-wrap gap-x-3 gap-y-1">
+						<button class="sort-btn underline text-gray-700" data-sort="date" data-dir="desc">Date ↓</button>
+						<button class="sort-btn" data-sort="date" data-dir="asc">Date ↑</button>
+						<button class="sort-btn" data-sort="title" data-dir="asc">A→Z</button>
+						<button class="sort-btn" data-sort="title" data-dir="desc">Z→A</button>
+					</div>
+				</div>
+				<div class="font-mono text-xs">
+					<div class="text-gray-400 uppercase tracking-wider mb-1 text-[10px]">Tags</div>
+					<div class="flex flex-col gap-1 max-h-[32rem] overflow-y-auto">
+						<button class="tag-all-btn text-left px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200">
+							All
+						</button>
+						{sortedTags.map(({ tag, count }) => (
+							<button
+								class="tag-btn text-left px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200"
+								data-tag={tag}
+							>
+								{tag} <span class="text-gray-400">({count})</span>
+							</button>
+						))}
+					</div>
+				</div>
+			</div>
 
-		<!-- Note count -->
-		<p id="note-count" class="font-mono text-xs text-gray-400 mb-3">
-			{totalCount} notes
-		</p>
+		</aside>
 
-		<!-- Notes list (all rendered at build time; JS shows/hides/sorts) -->
-		<ul id="notes-list" class="font-mono text-sm space-y-1">
-			{
-				sortedNotes.map((note) => (
-					<li
-						data-tags={JSON.stringify(note.data.tags || [])}
-						data-date={note.data.created ? new Date(note.data.created).toISOString().slice(0, 10) : ""}
-						data-title={getNoteTitle(note)}
-						data-body={stripMarkdown(note.body || "")}
-					>
-						<a
-							href={`/${note.collection}/${note.slug}/`}
-							class="flex items-baseline group"
+		<!-- MAIN: notes list -->
+		<section class="order-2 lg:order-1 lg:flex-1 min-w-0 mb-12">
+			<h1 class="text-3xl font-bold mb-4">Notes</h1>
+			<p class="mb-6 text-gray-600">
+				A collection of raw thoughts, snippets, and learnings. These are
+				less polished than blog posts and more like a digital garden.
+			</p>
+
+			<p id="note-count" class="font-mono text-xs text-gray-400 mb-3">
+				{totalCount} notes
+			</p>
+
+			<!-- Notes list (all rendered at build time; JS shows/hides/sorts) -->
+			<ul id="notes-list" class="font-mono text-sm space-y-1">
+				{
+					sortedNotes.map((note) => (
+						<li
+							data-tags={JSON.stringify(note.data.tags || [])}
+							data-date={note.data.created ? new Date(note.data.created).toISOString().slice(0, 10) : ""}
+							data-title={getNoteTitle(note)}
+							data-body={stripMarkdown(note.body || "")}
 						>
-							<span class="text-xs text-gray-400 mr-4 shrink-0">
-								{note.data.created
-									? new Date(note.data.created)
-											.toISOString()
-											.slice(0, 10)
-									: ""}
-							</span>
-							<span class="group-hover:underline text-blue-600">
-								{getNoteTitle(note)}
-							</span>
-						</a>
-					</li>
-				))
-			}
-		</ul>
-	</section>
+							<a
+								href={`/${note.collection}/${note.slug}/`}
+								class="flex items-baseline group"
+							>
+								<span class="text-xs text-gray-400 mr-4 shrink-0">
+									{note.data.created
+										? new Date(note.data.created).toISOString().slice(0, 10)
+										: ""}
+								</span>
+								<span class="group-hover:underline text-blue-600">
+									{getNoteTitle(note)}
+								</span>
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</section>
+
+	</div>
 </BaseLayout>
 
 <script>
@@ -132,7 +181,6 @@ const totalCount = sortedNotes.length;
 	let sortDir = "desc";
 	const selectedTags = new Set<string>();
 
-	const searchInput = document.getElementById("search") as HTMLInputElement;
 	const notesList = document.getElementById("notes-list") as HTMLUListElement;
 	const noteCount = document.getElementById("note-count") as HTMLParagraphElement;
 	const allItems = Array.from(notesList.querySelectorAll<HTMLLIElement>("li"));
@@ -180,34 +228,47 @@ const totalCount = sortedNotes.length;
 		noteCount.textContent = `${visible} note${visible !== 1 ? "s" : ""}`;
 	}
 
-	// Search (debounced 150ms)
+	// Search inputs — desktop (#search) and mobile (#search-mobile), kept in sync
 	let debounceTimer: ReturnType<typeof setTimeout>;
-	searchInput.addEventListener("input", (e) => {
-		clearTimeout(debounceTimer);
-		debounceTimer = setTimeout(() => {
-			query = (e.target as HTMLInputElement).value;
-			applyFilters();
-		}, 150);
+	(["search", "search-mobile"] as const).forEach((id) => {
+		const el = document.getElementById(id) as HTMLInputElement | null;
+		if (!el) return;
+		el.addEventListener("input", (e) => {
+			clearTimeout(debounceTimer);
+			const otherId = id === "search" ? "search-mobile" : "search";
+			const other = document.getElementById(otherId) as HTMLInputElement | null;
+			if (other) other.value = (e.target as HTMLInputElement).value;
+			debounceTimer = setTimeout(() => {
+				query = (e.target as HTMLInputElement).value;
+				applyFilters();
+			}, 150);
+		});
 	});
 
-	// Sort buttons
+	// Sort buttons — present in both panels; highlight all matching data-sort+data-dir
 	document.querySelectorAll<HTMLButtonElement>(".sort-btn").forEach((btn) => {
 		btn.addEventListener("click", () => {
 			sortKey = btn.dataset.sort ?? "date";
 			sortDir = btn.dataset.dir ?? "desc";
-			document.querySelectorAll(".sort-btn").forEach((b) => {
-				b.classList.remove("underline", "text-gray-700");
-			});
-			btn.classList.add("underline", "text-gray-700");
+			document
+				.querySelectorAll<HTMLButtonElement>(".sort-btn")
+				.forEach((b) => b.classList.remove("underline", "text-gray-700"));
+			document
+				.querySelectorAll<HTMLButtonElement>(
+					`.sort-btn[data-sort="${sortKey}"][data-dir="${sortDir}"]`
+				)
+				.forEach((b) => b.classList.add("underline", "text-gray-700"));
 			applyFilters();
 		});
 	});
 
-	// "All" tag button
-	document.getElementById("tag-all")!.addEventListener("click", () => {
-		selectedTags.clear();
-		updateTagStyles();
-		applyFilters();
+	// "All" tag buttons (one per panel)
+	document.querySelectorAll<HTMLButtonElement>(".tag-all-btn").forEach((btn) => {
+		btn.addEventListener("click", () => {
+			selectedTags.clear();
+			updateTagStyles();
+			applyFilters();
+		});
 	});
 
 	// Individual tag buttons
@@ -222,14 +283,17 @@ const totalCount = sortedNotes.length;
 	});
 
 	function updateTagStyles() {
-		const allBtn = document.getElementById("tag-all")!;
-		if (selectedTags.size === 0) {
-			allBtn.classList.add("bg-blue-100", "text-blue-700");
-			allBtn.classList.remove("bg-gray-100", "text-gray-600");
-		} else {
-			allBtn.classList.remove("bg-blue-100", "text-blue-700");
-			allBtn.classList.add("bg-gray-100", "text-gray-600");
-		}
+		// "All" buttons
+		document.querySelectorAll<HTMLButtonElement>(".tag-all-btn").forEach((btn) => {
+			if (selectedTags.size === 0) {
+				btn.classList.add("bg-blue-100", "text-blue-700");
+				btn.classList.remove("bg-gray-100", "text-gray-600");
+			} else {
+				btn.classList.remove("bg-blue-100", "text-blue-700");
+				btn.classList.add("bg-gray-100", "text-gray-600");
+			}
+		});
+		// Tag buttons (both panels synced)
 		document.querySelectorAll<HTMLButtonElement>(".tag-btn").forEach((btn) => {
 			if (selectedTags.has(btn.dataset.tag!)) {
 				btn.classList.add("bg-blue-100", "text-blue-700");

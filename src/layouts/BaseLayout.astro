@@ -2,7 +2,7 @@
 import "../styles/global.css";
 import Navigation from "../components/Navigation.astro";
 import Footer from "../components/Footer.astro";
-const { pageTitle, noindex = false } = Astro.props;
+const { pageTitle, noindex = false, wide = false } = Astro.props;
 ---
 
 <html lang="en">
@@ -15,7 +15,7 @@ const { pageTitle, noindex = false } = Astro.props;
 		<title>{pageTitle}</title>
 	</head>
 	<body class="font-sans text-gray-900 bg-white">
-		<main class="max-w-2xl mx-auto px-4 py-8">
+		<main class={`mx-auto px-4 py-8 ${wide ? "max-w-5xl" : "max-w-2xl"}`}>
 			<Navigation />
 
 			<slot />

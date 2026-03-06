@@ -1,48 +1,243 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
-import { groupNotesByTopic, getSortedGroupKeys } from "../../utils/noteGrouping";
 import { getNoteTitle } from "../../utils/note";
 
 const pageTitle = "Notes";
 const allNotes = await getCollection("notes");
 
-const groupedNotes = groupNotesByTopic(allNotes);
-const sortedKeys = getSortedGroupKeys(groupedNotes);
+// Strip markdown syntax at build time for content search
+function stripMarkdown(text: string): string {
+	return text
+		.replace(/```[\s\S]*?```/g, "")
+		.replace(/`[^`]+`/g, "")
+		.replace(/#{1,6}\s+/g, "")
+		.replace(/\*{1,2}([^*]+)\*{1,2}/g, "$1")
+		.replace(/_([^_]+)_/g, "$1")
+		.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+		.replace(/!\[[^\]]*\]\([^)]+\)/g, "")
+		.replace(/^[-*+]\s+/gm, "")
+		.replace(/\s+/g, " ")
+		.trim();
+}
+
+// Collect unique tags sorted by frequency
+const tagCounts: Record<string, number> = {};
+allNotes.forEach((note) => {
+	(note.data.tags || []).forEach((tag) => {
+		tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+	});
+});
+const sortedTags = Object.entries(tagCounts)
+	.sort((a, b) => b[1] - a[1])
+	.map(([tag, count]) => ({ tag, count }));
+
+// Pre-sort by date desc (default view)
+const sortedNotes = [...allNotes].sort(
+	(a, b) =>
+		new Date(b.data.created).valueOf() - new Date(a.data.created).valueOf()
+);
+
+const totalCount = sortedNotes.length;
 ---
 
 <BaseLayout pageTitle={pageTitle}>
 	<section class="mb-12">
 		<h1 class="text-3xl font-bold mb-4">Notes</h1>
-		<p class="mb-8 text-gray-600">
+		<p class="mb-6 text-gray-600">
 			A collection of raw thoughts, snippets, and learnings. These are
 			less polished than blog posts and more like a digital garden.
 		</p>
 
-		<div class="space-y-6">
+		<!-- Search -->
+		<input
+			id="search"
+			type="text"
+			placeholder="Search notes..."
+			autocomplete="off"
+			class="w-full font-mono text-sm border border-gray-200 rounded px-3 py-2 mb-4 focus:outline-none focus:border-gray-400"
+		/>
+
+		<!-- Sort controls -->
+		<div class="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-gray-500 mb-4">
+			<span>Sort:</span>
+			<button class="sort-btn underline text-gray-700" data-sort="date" data-dir="desc">Date ↓</button>
+			<button class="sort-btn" data-sort="date" data-dir="asc">Date ↑</button>
+			<button class="sort-btn" data-sort="title" data-dir="asc">Title A→Z</button>
+			<button class="sort-btn" data-sort="title" data-dir="desc">Title Z→A</button>
+		</div>
+
+		<!-- Tag multi-select -->
+		<div class="flex flex-wrap gap-2 mb-5">
+			<button
+				id="tag-all"
+				class="px-2 py-1 text-xs font-mono rounded bg-blue-100 text-blue-700 hover:bg-blue-200"
+			>
+				All
+			</button>
 			{
-				sortedKeys.map((key) => (
-					<section>
-						<span class="font-mono text-xs text-gray-600 uppercase tracking-wider">
-							{groupedNotes[key].displayName}
-						</span>
-						<ul class="font-mono text-sm space-y-1 mt-1">
-							{groupedNotes[key].notes.map((note) => (
-								<li>
-									<a href={`/${note.collection}/${note.slug}/`} class="flex items-baseline group">
-										<span class="text-xs text-gray-400 mr-4 shrink-0">
-											{note.data.created ? new Date(note.data.created).toISOString().slice(0, 10) : ""}
-										</span>
-										<span class="group-hover:underline text-blue-600">
-											{getNoteTitle(note)}
-										</span>
-									</a>
-								</li>
-							))}
-						</ul>
-					</section>
+				sortedTags.map(({ tag, count }) => (
+					<button
+						class="tag-btn px-2 py-1 text-xs font-mono rounded bg-gray-100 text-gray-600 hover:bg-gray-200"
+						data-tag={tag}
+					>
+						{tag}{" "}
+						<span class="text-gray-400">({count})</span>
+					</button>
 				))
 			}
 		</div>
+
+		<!-- Note count -->
+		<p id="note-count" class="font-mono text-xs text-gray-400 mb-3">
+			{totalCount} notes
+		</p>
+
+		<!-- Notes list (all rendered at build time; JS shows/hides/sorts) -->
+		<ul id="notes-list" class="font-mono text-sm space-y-1">
+			{
+				sortedNotes.map((note) => (
+					<li
+						data-tags={JSON.stringify(note.data.tags || [])}
+						data-date={note.data.created ? new Date(note.data.created).toISOString().slice(0, 10) : ""}
+						data-title={getNoteTitle(note)}
+						data-body={stripMarkdown(note.body || "")}
+					>
+						<a
+							href={`/${note.collection}/${note.slug}/`}
+							class="flex items-baseline group"
+						>
+							<span class="text-xs text-gray-400 mr-4 shrink-0">
+								{note.data.created
+									? new Date(note.data.created)
+											.toISOString()
+											.slice(0, 10)
+									: ""}
+							</span>
+							<span class="group-hover:underline text-blue-600">
+								{getNoteTitle(note)}
+							</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
 	</section>
 </BaseLayout>
+
+<script>
+	// State
+	let query = "";
+	let sortKey = "date";
+	let sortDir = "desc";
+	const selectedTags = new Set<string>();
+
+	const searchInput = document.getElementById("search") as HTMLInputElement;
+	const notesList = document.getElementById("notes-list") as HTMLUListElement;
+	const noteCount = document.getElementById("note-count") as HTMLParagraphElement;
+	const allItems = Array.from(notesList.querySelectorAll<HTMLLIElement>("li"));
+
+	function applyFilters() {
+		const q = query.toLowerCase();
+
+		// Sort
+		const sorted = [...allItems].sort((a, b) => {
+			if (sortKey === "date") {
+				const diff = (a.dataset.date ?? "").localeCompare(b.dataset.date ?? "");
+				return sortDir === "desc" ? -diff : diff;
+			} else {
+				const diff = (a.dataset.title ?? "").localeCompare(
+					b.dataset.title ?? "",
+					undefined,
+					{ sensitivity: "base" }
+				);
+				return sortDir === "asc" ? diff : -diff;
+			}
+		});
+
+		// Re-append in sorted order
+		sorted.forEach((li) => notesList.appendChild(li));
+
+		// Show/hide
+		let visible = 0;
+		sorted.forEach((li) => {
+			const tags: string[] = JSON.parse(li.dataset.tags || "[]");
+			const matchesTag =
+				selectedTags.size === 0 || tags.some((t) => selectedTags.has(t));
+			const matchesQuery =
+				!q ||
+				(li.dataset.title ?? "").toLowerCase().includes(q) ||
+				(li.dataset.body ?? "").toLowerCase().includes(q);
+
+			if (matchesTag && matchesQuery) {
+				li.style.display = "";
+				visible++;
+			} else {
+				li.style.display = "none";
+			}
+		});
+
+		noteCount.textContent = `${visible} note${visible !== 1 ? "s" : ""}`;
+	}
+
+	// Search (debounced 150ms)
+	let debounceTimer: ReturnType<typeof setTimeout>;
+	searchInput.addEventListener("input", (e) => {
+		clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(() => {
+			query = (e.target as HTMLInputElement).value;
+			applyFilters();
+		}, 150);
+	});
+
+	// Sort buttons
+	document.querySelectorAll<HTMLButtonElement>(".sort-btn").forEach((btn) => {
+		btn.addEventListener("click", () => {
+			sortKey = btn.dataset.sort ?? "date";
+			sortDir = btn.dataset.dir ?? "desc";
+			document.querySelectorAll(".sort-btn").forEach((b) => {
+				b.classList.remove("underline", "text-gray-700");
+			});
+			btn.classList.add("underline", "text-gray-700");
+			applyFilters();
+		});
+	});
+
+	// "All" tag button
+	document.getElementById("tag-all")!.addEventListener("click", () => {
+		selectedTags.clear();
+		updateTagStyles();
+		applyFilters();
+	});
+
+	// Individual tag buttons
+	document.querySelectorAll<HTMLButtonElement>(".tag-btn").forEach((btn) => {
+		btn.addEventListener("click", () => {
+			const tag = btn.dataset.tag!;
+			if (selectedTags.has(tag)) selectedTags.delete(tag);
+			else selectedTags.add(tag);
+			updateTagStyles();
+			applyFilters();
+		});
+	});
+
+	function updateTagStyles() {
+		const allBtn = document.getElementById("tag-all")!;
+		if (selectedTags.size === 0) {
+			allBtn.classList.add("bg-blue-100", "text-blue-700");
+			allBtn.classList.remove("bg-gray-100", "text-gray-600");
+		} else {
+			allBtn.classList.remove("bg-blue-100", "text-blue-700");
+			allBtn.classList.add("bg-gray-100", "text-gray-600");
+		}
+		document.querySelectorAll<HTMLButtonElement>(".tag-btn").forEach((btn) => {
+			if (selectedTags.has(btn.dataset.tag!)) {
+				btn.classList.add("bg-blue-100", "text-blue-700");
+				btn.classList.remove("bg-gray-100", "text-gray-600");
+			} else {
+				btn.classList.remove("bg-blue-100", "text-blue-700");
+				btn.classList.add("bg-gray-100", "text-gray-600");
+			}
+		});
+	}
+</script>

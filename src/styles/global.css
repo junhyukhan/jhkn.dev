@@ -54,21 +54,10 @@ a:hover {
   @apply bg-transparent p-0 font-normal text-sm;
 }
 
-/* ─── Note Panel ────────────────────────────────────────────────────────────── */
-
-/* Drag handle (mobile only) */
-#note-panel-handle {
-  display: none;
-  width: 36px;
-  height: 4px;
-  margin: 10px auto 4px;
-  border-radius: 2px;
-  background: #d1d5db;
-  flex-shrink: 0;
-}
+/* ─── Note Stack ─────────────────────────────────────────────────────────────── */
 
 /* Backdrop */
-#note-panel-backdrop {
+#note-stack-backdrop {
   position: fixed;
   inset: 0;
   z-index: 49;
@@ -77,114 +66,242 @@ a:hover {
   pointer-events: none;
   transition: opacity 280ms ease;
 }
-#note-panel-backdrop.is-open {
+#note-stack-backdrop.is-open {
   opacity: 1;
   pointer-events: auto;
 }
 
-/* Panel base — right-side drawer on desktop */
-#note-panel {
+/* Stack container — desktop: horizontal flex row anchored to right */
+#note-stack {
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
-  width: min(480px, 45vw);
   display: flex;
-  flex-direction: column;
-  background: #fff;
+  flex-direction: row;
   z-index: 50;
-  box-shadow: -4px 0 24px rgb(0 0 0 / 0.08);
   transform: translateX(100%);
   transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
-  overflow: hidden;
 }
-#note-panel.is-open {
+
+#note-stack.is-open {
   transform: translateX(0);
 }
 
-/* Mobile — bottom sheet */
+/* Mobile: bottom-anchored column, full width */
 @media (max-width: 639px) {
-  #note-panel {
+  #note-stack {
     top: auto;
     left: 0;
     right: 0;
-    width: 100%;
+    flex-direction: column;
     height: 85dvh;
     border-radius: 16px 16px 0 0;
-    box-shadow: 0 -4px 24px rgb(0 0 0 / 0.12);
+    overflow: hidden;
     transform: translateY(100%);
+    box-shadow: 0 -4px 24px rgb(0 0 0 / 0.12);
   }
-  #note-panel.is-open {
+  #note-stack.is-open {
     transform: translateY(0);
   }
-  #note-panel-handle {
+}
+
+/* Mobile drag handle */
+#note-stack-handle {
+  display: none;
+  width: 36px;
+  height: 4px;
+  margin: 10px auto 4px;
+  border-radius: 2px;
+  background: #d1d5db;
+  flex-shrink: 0;
+}
+@media (max-width: 639px) {
+  #note-stack-handle {
     display: block;
   }
 }
 
-/* Panel header */
-#note-panel-header {
+/* Individual card */
+.stack-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
+  flex-direction: row;
   flex-shrink: 0;
-  gap: 0.5rem;
+  overflow: hidden;
+  background: #fff;
 }
 
-#note-panel-nav,
-#note-panel-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+/* Mobile: cards stack vertically */
+@media (max-width: 639px) {
+  .stack-card {
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .stack-card.is-active {
+    flex: 1;
+    overflow: hidden;
+  }
+  .stack-card.is-strip {
+    flex: 0 0 44px;
+    overflow: hidden;
+  }
 }
 
-/* Nav and action buttons */
-#note-panel-header button,
-#note-panel-header a {
+/* Strip button — the compressed "go back" tab */
+.strip-btn {
+  width: 48px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 0.7rem;
+  font-family: var(--font-sans);
+  color: #9ca3af;
+  background: #f9fafb;
+  border: none;
+  border-right: 1px solid #e5e7eb;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-height: 180px;
+  transition: background 150ms, color 150ms, width 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.strip-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+/* Hide strip-btn when card is active on desktop */
+.stack-card.is-active .strip-btn {
+  width: 0;
+  border-right: none;
+  pointer-events: none;
+}
+
+/* Mobile strip button — horizontal bar */
+@media (max-width: 639px) {
+  .strip-btn {
+    width: 100%;
+    height: 44px;
+    max-height: none;
+    writing-mode: horizontal-tb;
+    justify-content: flex-start;
+    padding: 0 1rem;
+    font-size: 0.8rem;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+    transition: background 150ms, color 150ms, height 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .stack-card.is-active .strip-btn {
+    width: 100%;
+    height: 0;
+    padding: 0;
+    border-bottom: none;
+  }
+}
+
+/* Card body — the full note view, hidden (0 width) when stripped */
+.card-body {
+  display: flex;
+  flex-direction: column;
+  width: 0;
+  overflow: hidden;
+  transition: width 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow: -2px 0 16px rgb(0 0 0 / 0.07);
+  background: #fff;
+}
+
+/* Mobile card body fills the card */
+@media (max-width: 639px) {
+  .card-body {
+    width: 100%;
+    flex: 1;
+    box-shadow: none;
+    transition: none;
+  }
+  .stack-card.is-strip .card-body {
+    flex: 0;
+    overflow: hidden;
+  }
+}
+
+/* Card header */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  gap: 0.5rem;
+  background: #fff;
+}
+
+.card-title {
+  flex: 1;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.card-header-actions {
+  display: flex;
+  gap: 0.125rem;
+  flex-shrink: 0;
+}
+
+.card-header button,
+.card-header a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #6b7280;
-  font-size: 1rem;
+  color: #9ca3af;
+  font-size: 0.9rem;
   cursor: pointer;
   text-decoration: none;
-  transition: background 150ms ease, color 150ms ease;
+  transition: background 150ms, color 150ms;
   -webkit-tap-highlight-color: transparent;
 }
-#note-panel-header button:hover,
-#note-panel-header a:hover {
+.card-header button:hover,
+.card-header a:hover {
   background: #f3f4f6;
   color: #111827;
   text-decoration: none;
 }
-#note-panel-header button:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-#note-panel-header button:disabled:hover {
-  background: transparent;
-  color: #6b7280;
-}
 
-/* Scrollable note content area */
-#note-panel-content {
+/* Scrollable note content */
+.card-content {
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 1.25rem 1.5rem 2rem;
   outline: none;
 }
-
-/* Prose inside panel — inherit the same typography styles */
-#note-panel-content .prose {
+.card-content .prose {
   max-width: none;
+}
+
+/* Removing animation — cards exiting the stack */
+.stack-card.is-removing {
+  opacity: 0;
+  transition: opacity 220ms ease-in;
+}
+@media (min-width: 640px) {
+  .stack-card.is-removing {
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 220ms ease-in, opacity 220ms ease-in;
+  }
 }
 
 /* ─── Loading skeleton ───────────────────────────────────────────────────────── */

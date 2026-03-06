@@ -1,157 +1,204 @@
-// Note Panel: intercepts .internal wiki link clicks and shows content in a
-// sliding panel (right drawer on desktop, bottom sheet on mobile).
+// Note Stack: wiki links open in a stacked-cards panel.
+// Desktop — horizontal strips on the left, active note fills right.
+// Mobile  — horizontal strip bars above, active note fills bottom sheet.
 // No framework dependencies — plain JS module loaded via BaseLayout.
 
-// ─── State ───────────────────────────────────────────────────────────────────
+// ─── State ────────────────────────────────────────────────────────────────────
 
-/** @type {{ slug: string; scrollTop: number }[]} */
-const history = [];
-let cursor = -1;
+/** @type {{ slug: string; scrollTop: number; title: string; cardEl: HTMLElement }[]} */
+const stack = []; // oldest → newest
+
 let isOpen = false;
-let isFetching = false;
 /** @type {HTMLElement | null} */
 let lastFocused = null;
 
 /** @type {Map<string, string>} slug → article innerHTML */
 const cache = new Map();
 
-// ─── DOM refs (set in init) ───────────────────────────────────────────────────
+let stackEl, backdropEl;
 
-let backdrop, panel, header, backBtn, fwdBtn, openLink, closeBtn, content;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// ─── DOM Creation ─────────────────────────────────────────────────────────────
+function getCardWidth() {
+  // Give more space on wider screens; min 320px, max 600px
+  return Math.min(600, Math.max(320, window.innerWidth * 0.45));
+}
 
-function createPanelDOM() {
-  backdrop = document.createElement("div");
-  backdrop.id = "note-panel-backdrop";
-  backdrop.setAttribute("aria-hidden", "true");
+function slugFromHref(href) {
+  try {
+    const url = new URL(href, window.location.origin);
+    return url.pathname.replace(/^\/|\/$/g, "");
+  } catch {
+    return href.replace(/^\/|\/$/g, "");
+  }
+}
 
-  panel = document.createElement("aside");
-  panel.id = "note-panel";
-  panel.setAttribute("role", "dialog");
-  panel.setAttribute("aria-modal", "true");
-  panel.setAttribute("aria-label", "Note preview");
-  panel.setAttribute("aria-hidden", "true");
+function skeletonHTML() {
+  return `<div class="panel-skeleton" aria-busy="true" aria-label="Loading…">
+    <div class="sk-line sk-title"></div>
+    <div class="sk-line sk-short"></div>
+    <div class="sk-line"></div>
+    <div class="sk-line"></div>
+    <div class="sk-line sk-short"></div>
+    <div class="sk-line"></div>
+  </div>`;
+}
 
-  header = document.createElement("div");
-  header.id = "note-panel-header";
+// ─── DOM creation ─────────────────────────────────────────────────────────────
 
-  const nav = document.createElement("div");
-  nav.id = "note-panel-nav";
+function createStackDOM() {
+  backdropEl = document.createElement("div");
+  backdropEl.id = "note-stack-backdrop";
+  backdropEl.setAttribute("aria-hidden", "true");
 
-  backBtn = document.createElement("button");
-  backBtn.id = "panel-back";
-  backBtn.setAttribute("aria-label", "Go back");
-  backBtn.disabled = true;
-  backBtn.textContent = "←";
+  stackEl = document.createElement("div");
+  stackEl.id = "note-stack";
+  stackEl.setAttribute("role", "complementary");
+  stackEl.setAttribute("aria-label", "Note preview stack");
 
-  fwdBtn = document.createElement("button");
-  fwdBtn.id = "panel-forward";
-  fwdBtn.setAttribute("aria-label", "Go forward");
-  fwdBtn.disabled = true;
-  fwdBtn.textContent = "→";
+  // Mobile drag handle (CSS hides it on desktop)
+  const handle = document.createElement("div");
+  handle.id = "note-stack-handle";
+  handle.setAttribute("aria-hidden", "true");
+  stackEl.appendChild(handle);
 
-  nav.append(backBtn, fwdBtn);
+  document.body.append(backdropEl, stackEl);
+  setupSwipe(handle);
+}
+
+function createCardEl(slug, title) {
+  const card = document.createElement("div");
+  card.className = "stack-card";
+  card.setAttribute("data-slug", slug);
+
+  // Strip button — visible when the card is compressed
+  const stripBtn = document.createElement("button");
+  stripBtn.className = "strip-btn";
+  stripBtn.setAttribute("aria-label", `Go back to ${title}`);
+  stripBtn.textContent = title;
+
+  // Card body — the full note view
+  const body = document.createElement("div");
+  body.className = "card-body";
+
+  const header = document.createElement("div");
+  header.className = "card-header";
+
+  const titleEl = document.createElement("span");
+  titleEl.className = "card-title";
+  titleEl.textContent = title;
 
   const actions = document.createElement("div");
-  actions.id = "note-panel-actions";
+  actions.className = "card-header-actions";
 
-  openLink = document.createElement("a");
-  openLink.id = "panel-open-link";
+  const openLink = document.createElement("a");
+  openLink.className = "card-open";
+  openLink.href = `/${slug}/`;
   openLink.setAttribute("target", "_blank");
   openLink.setAttribute("rel", "noopener");
   openLink.setAttribute("aria-label", "Open note in full page");
   openLink.textContent = "↗";
 
-  closeBtn = document.createElement("button");
-  closeBtn.id = "panel-close";
-  closeBtn.setAttribute("aria-label", "Close panel");
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "card-close-all";
+  closeBtn.setAttribute("aria-label", "Close all");
   closeBtn.textContent = "✕";
 
   actions.append(openLink, closeBtn);
-  header.append(nav, actions);
+  header.append(titleEl, actions);
 
-  // Drag handle for mobile swipe-to-dismiss
-  const handle = document.createElement("div");
-  handle.id = "note-panel-handle";
-  handle.setAttribute("aria-hidden", "true");
-
-  content = document.createElement("div");
-  content.id = "note-panel-content";
+  const content = document.createElement("div");
+  content.className = "card-content";
   content.setAttribute("tabindex", "-1");
 
-  panel.append(handle, header, content);
-  document.body.append(backdrop, panel);
+  body.append(header, content);
+  card.append(stripBtn, body);
+  return card;
 }
 
-// ─── Panel open / close ───────────────────────────────────────────────────────
+// ─── Stack open / close ───────────────────────────────────────────────────────
 
-function openPanel(slug) {
-  // If the panel is already open navigating to a new note from within it,
-  // truncate any forward history before pushing.
-  if (cursor < history.length - 1) {
-    history.splice(cursor + 1);
-  }
-
-  // Save scroll position of current entry before navigating away.
-  if (cursor >= 0 && history[cursor]) {
-    history[cursor].scrollTop = content.scrollTop;
-  }
-
-  history.push({ slug, scrollTop: 0 });
-  cursor = history.length - 1;
-
-  if (!isOpen) {
-    isOpen = true;
-    panel.setAttribute("aria-hidden", "false");
-    panel.classList.add("is-open");
-    backdrop.classList.add("is-open");
-    document.body.style.overflow = "hidden";
-    panel.style.willChange = "transform";
-    panel.addEventListener(
-      "transitionend",
-      () => {
-        panel.style.willChange = "";
-        if (!isOpen) content.scrollTop = 0;
-      },
-      { once: true }
-    );
-  }
-
-  loadNote(slug, 0);
+function openStack() {
+  if (isOpen) return;
+  isOpen = true;
+  stackEl.classList.add("is-open");
+  backdropEl.classList.add("is-open");
+  document.body.style.overflow = "hidden";
 }
 
-function closePanel() {
+function closeStack() {
   if (!isOpen) return;
-  isOpen = false;
-  panel.setAttribute("aria-hidden", "true");
-  panel.classList.remove("is-open");
-  backdrop.classList.remove("is-open");
+  stackEl.classList.remove("is-open");
+  backdropEl.classList.remove("is-open");
   document.body.style.overflow = "";
 
-  // Restore focus to the element that triggered the panel.
-  if (lastFocused && document.contains(lastFocused)) {
-    lastFocused.focus();
+  let done = false;
+  const cleanup = () => {
+    if (done) return;
+    done = true;
+    stack.forEach((e) => e.cardEl.remove());
+    stack.length = 0;
+    isOpen = false;
+    if (lastFocused && document.contains(lastFocused)) {
+      lastFocused.focus();
+    }
+    lastFocused = null;
+  };
+  stackEl.addEventListener("transitionend", cleanup, { once: true });
+  setTimeout(cleanup, 350); // fallback if transitionend doesn't fire
+}
+
+// ─── Card activation / deactivation ──────────────────────────────────────────
+
+function activateCard(index) {
+  const { cardEl } = stack[index];
+  cardEl.classList.remove("is-strip");
+  cardEl.classList.add("is-active");
+  // Only set inline width on desktop (mobile uses flex in CSS)
+  if (window.innerWidth >= 640) {
+    cardEl.querySelector(".card-body").style.width = getCardWidth() + "px";
   }
-  lastFocused = null;
+}
+
+function deactivateCard(index) {
+  const entry = stack[index];
+  const contentEl = entry.cardEl.querySelector(".card-content");
+  if (contentEl) entry.scrollTop = contentEl.scrollTop;
+  entry.cardEl.classList.remove("is-active");
+  entry.cardEl.classList.add("is-strip");
+  if (window.innerWidth >= 640) {
+    // Clear inline width so CSS (.card-body { width: 0 }) takes over
+    entry.cardEl.querySelector(".card-body").style.width = "";
+  }
 }
 
 // ─── Note loading ─────────────────────────────────────────────────────────────
 
-async function loadNote(slug, scrollTop = 0) {
-  updateNavButtons();
-  openLink.href = `/${slug}/`;
+async function loadNoteIntoCard(cardEl, slug, scrollTop = 0) {
+  const contentEl = cardEl.querySelector(".card-content");
+  const titleEl = cardEl.querySelector(".card-title");
+  const stripBtn = cardEl.querySelector(".strip-btn");
+  const openLink = cardEl.querySelector(".card-open");
+  if (openLink) openLink.href = `/${slug}/`;
 
+  // Fast path from cache
   if (cache.has(slug)) {
-    content.innerHTML = cache.get(slug);
-    content.scrollTop = scrollTop;
-    content.focus({ preventScroll: true });
+    contentEl.innerHTML = cache.get(slug);
+    contentEl.scrollTop = scrollTop;
+    contentEl.focus({ preventScroll: true });
+    // Title may have been resolved on a previous load — sync it
+    const entry = stack.find((e) => e.cardEl === cardEl);
+    if (entry && entry.title && entry.title !== slug) {
+      if (titleEl) titleEl.textContent = entry.title;
+      if (stripBtn) {
+        stripBtn.textContent = entry.title;
+        stripBtn.setAttribute("aria-label", `Go back to ${entry.title}`);
+      }
+    }
     return;
   }
 
-  if (isFetching) return;
-  isFetching = true;
-  content.innerHTML = skeletonHTML();
+  contentEl.innerHTML = skeletonHTML();
 
   try {
     const res = await fetch(`/${slug}/`);
@@ -159,48 +206,124 @@ async function loadNote(slug, scrollTop = 0) {
     const html = await res.text();
     const doc = new DOMParser().parseFromString(html, "text/html");
     const article = doc.querySelector("article.prose");
-    if (!article) throw new Error("article not found");
+    if (!article) throw new Error("article.prose not found");
+
+    // Extract title from h1 in the fetched page
+    const h1 = article.querySelector("h1");
+    const title = h1 ? h1.textContent.trim() : slug.split("/").pop() || slug;
+
+    // Update the stack entry and all labels
+    const entry = stack.find((e) => e.cardEl === cardEl);
+    if (entry) entry.title = title;
+    if (titleEl) titleEl.textContent = title;
+    if (stripBtn) {
+      stripBtn.textContent = title;
+      stripBtn.setAttribute("aria-label", `Go back to ${title}`);
+    }
+
     const innerHTML = article.innerHTML;
     cache.set(slug, innerHTML);
 
-    // Only apply if this slug is still the current one.
-    if (history[cursor]?.slug === slug) {
-      content.innerHTML = innerHTML;
-      content.scrollTop = scrollTop;
-      content.focus({ preventScroll: true });
+    // Only inject if card is still in the stack (user may have closed it)
+    if (stack.some((e) => e.cardEl === cardEl)) {
+      contentEl.innerHTML = innerHTML;
+      contentEl.scrollTop = scrollTop;
+      contentEl.focus({ preventScroll: true });
     }
   } catch {
-    content.innerHTML =
+    contentEl.innerHTML =
       `<p style="padding:1rem;color:#6b7280">Failed to load note. ` +
       `<a href="/${slug}/" style="color:#2563eb">Open directly →</a></p>`;
-  } finally {
-    isFetching = false;
   }
 }
 
-// ─── History navigation ───────────────────────────────────────────────────────
+// ─── Push / pop ───────────────────────────────────────────────────────────────
 
-function navigateBack() {
-  if (cursor <= 0) return;
-  history[cursor].scrollTop = content.scrollTop;
-  cursor--;
-  const { slug, scrollTop } = history[cursor];
-  openLink.href = `/${slug}/`;
-  loadNote(slug, scrollTop);
+function pushNote(slug) {
+  // Compress the currently active card into a strip
+  if (stack.length > 0) {
+    deactivateCard(stack.length - 1);
+  }
+
+  const title = slug.split("/").pop() || slug;
+  const cardEl = createCardEl(slug, title);
+  cardEl.classList.add("is-active");
+
+  if (window.innerWidth >= 640) {
+    cardEl.querySelector(".card-body").style.width = getCardWidth() + "px";
+  }
+
+  stackEl.appendChild(cardEl);
+  stack.push({ slug, scrollTop: 0, title, cardEl });
+
+  loadNoteIntoCard(cardEl, slug, 0);
+  if (!isOpen) openStack();
 }
 
-function navigateForward() {
-  if (cursor >= history.length - 1) return;
-  history[cursor].scrollTop = content.scrollTop;
-  cursor++;
-  const { slug, scrollTop } = history[cursor];
-  openLink.href = `/${slug}/`;
-  loadNote(slug, scrollTop);
+function popToIndex(index) {
+  if (index < 0 || index >= stack.length - 1) return;
+
+  // Save scroll of current active before removing it
+  const activeEntry = stack[stack.length - 1];
+  const activeContent = activeEntry.cardEl.querySelector(".card-content");
+  if (activeContent) activeEntry.scrollTop = activeContent.scrollTop;
+
+  // Animate out and remove all cards after index
+  const toRemove = stack.splice(index + 1);
+  toRemove.forEach(({ cardEl }) => {
+    let done = false;
+    const cleanup = () => {
+      if (done) return;
+      done = true;
+      cardEl.remove();
+    };
+    cardEl.classList.add("is-removing");
+    setTimeout(cleanup, 260); // slightly past transition duration
+  });
+
+  // Expand the target card to active
+  activateCard(index);
+
+  const target = stack[index];
+  const targetContent = target.cardEl.querySelector(".card-content");
+  if (targetContent) {
+    requestAnimationFrame(() => {
+      targetContent.scrollTop = target.scrollTop;
+      targetContent.focus({ preventScroll: true });
+    });
+  }
 }
 
-function updateNavButtons() {
-  backBtn.disabled = cursor <= 0;
-  fwdBtn.disabled = cursor >= history.length - 1;
+// ─── Mobile swipe-to-dismiss ──────────────────────────────────────────────────
+
+function setupSwipe(handle) {
+  let startY = 0, startTime = 0, dragging = false;
+
+  handle.addEventListener("touchstart", (e) => {
+    if (window.innerWidth >= 640) return;
+    startY = e.touches[0].clientY;
+    startTime = Date.now();
+    dragging = true;
+    stackEl.style.transition = "none";
+  });
+
+  handle.addEventListener("touchmove", (e) => {
+    if (!dragging) return;
+    const delta = Math.max(0, e.touches[0].clientY - startY);
+    stackEl.style.transform = `translateY(${delta}px)`;
+  });
+
+  handle.addEventListener("touchend", (e) => {
+    if (!dragging) return;
+    dragging = false;
+    stackEl.style.transition = "";
+    stackEl.style.transform = "";
+    const delta = Math.max(0, e.changedTouches[0].clientY - startY);
+    const velocity = delta / Math.max(1, Date.now() - startTime);
+    if (delta > 80 || velocity > 0.4) {
+      closeStack();
+    }
+  });
 }
 
 // ─── Focus trap ───────────────────────────────────────────────────────────────
@@ -208,7 +331,7 @@ function updateNavButtons() {
 function trapFocus(e) {
   if (!isOpen || e.key !== "Tab") return;
   const focusable = Array.from(
-    panel.querySelectorAll(
+    stackEl.querySelectorAll(
       'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
     )
   );
@@ -224,100 +347,45 @@ function trapFocus(e) {
   }
 }
 
-// ─── Mobile swipe-to-dismiss ──────────────────────────────────────────────────
-
-function setupSwipe() {
-  let startY = 0;
-  let startTime = 0;
-  let dragging = false;
-
-  header.addEventListener("touchstart", (e) => {
-    startY = e.touches[0].clientY;
-    startTime = Date.now();
-    dragging = true;
-    panel.style.transition = "none";
-  });
-
-  header.addEventListener("touchmove", (e) => {
-    if (!dragging) return;
-    const delta = Math.max(0, e.touches[0].clientY - startY);
-    // On mobile the panel translates Y, on desktop X — check orientation.
-    const isMobile = window.innerWidth < 640;
-    if (isMobile) {
-      panel.style.transform = `translateY(${delta}px)`;
-    }
-  });
-
-  header.addEventListener("touchend", (e) => {
-    if (!dragging) return;
-    dragging = false;
-    panel.style.transition = "";
-    const delta = Math.max(0, e.changedTouches[0].clientY - startY);
-    const velocity = delta / Math.max(1, Date.now() - startTime);
-    const isMobile = window.innerWidth < 640;
-    if (isMobile && (delta > 80 || velocity > 0.4)) {
-      closePanel();
-    } else {
-      // Snap back.
-      panel.style.transform = "";
-    }
-  });
-}
-
-// ─── Skeleton loading state ───────────────────────────────────────────────────
-
-function skeletonHTML() {
-  return `
-    <div class="panel-skeleton" aria-busy="true" aria-label="Loading note…">
-      <div class="sk-line sk-title"></div>
-      <div class="sk-line sk-short"></div>
-      <div class="sk-line"></div>
-      <div class="sk-line"></div>
-      <div class="sk-line sk-short"></div>
-      <div class="sk-line"></div>
-      <div class="sk-line"></div>
-    </div>`;
-}
-
-// ─── Slug extraction from href ────────────────────────────────────────────────
-
-function slugFromHref(href) {
-  // href is an absolute URL string like "http://localhost:4321/notes/some-slug/"
-  // or a relative path like "/notes/some-slug/"
-  try {
-    const url = new URL(href, window.location.origin);
-    // Strip leading slash and trailing slash.
-    return url.pathname.replace(/^\/|\/$/g, "");
-  } catch {
-    return href.replace(/^\/|\/$/g, "");
-  }
-}
-
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 function init() {
-  createPanelDOM();
-  setupSwipe();
+  createStackDOM();
 
-  // Intercept all .internal link clicks via delegation.
   document.addEventListener("click", (e) => {
-    const link = e.target.closest("a.internal");
-    if (!link) return;
-    e.preventDefault();
-    lastFocused = link;
-    const slug = slugFromHref(link.href);
-    openPanel(slug);
+    // Wiki link → push new note onto stack
+    const internalLink = e.target.closest("a.internal");
+    if (internalLink) {
+      e.preventDefault();
+      lastFocused = internalLink;
+      pushNote(slugFromHref(internalLink.href));
+      return;
+    }
+
+    // Strip button → pop stack back to that note
+    const stripBtn = e.target.closest(".strip-btn");
+    if (stripBtn) {
+      const cardEl = stripBtn.closest(".stack-card");
+      const index = stack.findIndex((entry) => entry.cardEl === cardEl);
+      if (index >= 0 && index < stack.length - 1) {
+        popToIndex(index);
+      }
+      return;
+    }
+
+    // Close button → close the entire stack
+    if (e.target.closest(".card-close-all")) {
+      closeStack();
+      return;
+    }
   });
 
-  closeBtn.addEventListener("click", closePanel);
-  backdrop.addEventListener("click", closePanel);
-  backBtn.addEventListener("click", navigateBack);
-  fwdBtn.addEventListener("click", navigateForward);
+  backdropEl.addEventListener("click", closeStack);
 
   document.addEventListener("keydown", (e) => {
     if (!isOpen) return;
     if (e.key === "Escape") {
-      closePanel();
+      closeStack();
     } else {
       trapFocus(e);
     }

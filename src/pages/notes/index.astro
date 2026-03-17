@@ -160,13 +160,17 @@ const totalCount = sortedNotes.length;
 </BaseLayout>
 
 <script>
-	// State
-	let query = "";
-	let sortKey = "date";
-	let sortDir = "desc";
-	let prevSortKey = sortKey;
-	let prevSortDir = sortDir;
-	const selectedTags = new Set<string>();
+	// Initialize state from URL params
+	const initParams = new URLSearchParams(location.search);
+	const initSort = (initParams.get("sort") ?? "date-desc").split("-");
+
+	let query = initParams.get("q") ?? "";
+	let sortKey = initSort[0] ?? "date";
+	let sortDir = initSort[1] ?? "desc";
+	// Force re-sort on first applyFilters since DOM is always built date-desc
+	let prevSortKey = "";
+	let prevSortDir = "";
+	const selectedTags = new Set<string>(initParams.getAll("tags"));
 
 	const notesList = document.getElementById("notes-list") as HTMLUListElement;
 	const noteCount = document.getElementById("note-count") as HTMLParagraphElement;
@@ -179,6 +183,15 @@ const totalCount = sortedNotes.length;
 		date: li.dataset.date ?? "",
 		title: (li.dataset.title ?? "").toLowerCase(),
 	}));
+
+	function syncURL() {
+		const p = new URLSearchParams();
+		if (query) p.set("q", query);
+		if (sortKey !== "date" || sortDir !== "desc") p.set("sort", `${sortKey}-${sortDir}`);
+		selectedTags.forEach((tag) => p.append("tags", tag));
+		const qs = p.toString();
+		history.replaceState(null, "", qs ? `?${qs}` : location.pathname);
+	}
 
 	function applyFilters() {
 		const q = query.toLowerCase();
@@ -219,6 +232,20 @@ const totalCount = sortedNotes.length;
 		noteCount.textContent = `${visible} note${visible !== 1 ? "s" : ""}`;
 	}
 
+	// Apply initial state from URL on load
+	(["search", "search-mobile"] as const).forEach((id) => {
+		const el = document.getElementById(id) as HTMLInputElement | null;
+		if (el) el.value = query;
+	});
+	document.querySelectorAll<HTMLButtonElement>(".sort-btn").forEach((b) => {
+		const active = b.dataset.sort === sortKey && b.dataset.dir === sortDir;
+		b.classList.toggle("underline", active);
+		b.classList.toggle("text-gray-700", active);
+		b.setAttribute("aria-pressed", String(active));
+	});
+	updateTagStyles();
+	applyFilters();
+
 	// Search inputs — desktop (#search) and mobile (#search-mobile), kept in sync
 	let debounceTimer: ReturnType<typeof setTimeout>;
 	(["search", "search-mobile"] as const).forEach((id) => {
@@ -231,6 +258,7 @@ const totalCount = sortedNotes.length;
 			if (other) other.value = (e.target as HTMLInputElement).value;
 			debounceTimer = setTimeout(() => {
 				query = (e.target as HTMLInputElement).value;
+				syncURL();
 				applyFilters();
 			}, 150);
 		});
@@ -253,6 +281,7 @@ const totalCount = sortedNotes.length;
 					b.classList.add("underline", "text-gray-700");
 					b.setAttribute("aria-pressed", "true");
 				});
+			syncURL();
 			requestAnimationFrame(() => applyFilters());
 		});
 	});
@@ -262,6 +291,7 @@ const totalCount = sortedNotes.length;
 		btn.addEventListener("click", () => {
 			selectedTags.clear();
 			updateTagStyles();
+			syncURL();
 			requestAnimationFrame(() => applyFilters());
 		});
 	});
@@ -273,6 +303,7 @@ const totalCount = sortedNotes.length;
 			if (selectedTags.has(tag)) selectedTags.delete(tag);
 			else selectedTags.add(tag);
 			updateTagStyles();
+			syncURL();
 			requestAnimationFrame(() => applyFilters());
 		});
 	});

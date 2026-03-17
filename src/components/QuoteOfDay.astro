@@ -9,12 +9,6 @@ if (quotes.length === 0) {
     return;
 }
 
-// Rotate every 3 days deterministically
-const DAY_MS = 1000 * 60 * 60 * 24;
-const ROTATION_DAYS = 3;
-const dayIndex = Math.floor(Date.now() / (DAY_MS * ROTATION_DAYS));
-const quote = quotes[dayIndex % quotes.length];
-
 function parseQuote(body: string): { text: string; source: string | null } {
     const paragraphs = body
         .trim()
@@ -36,17 +30,20 @@ function parseQuote(body: string): { text: string; source: string | null } {
     return { text, source };
 }
 
-const { text, source } = parseQuote(quote.body ?? "");
+const parsedQuotes = quotes.map((quote) => ({
+    ...parseQuote(quote.body ?? ""),
+    href: `/${quote.collection}/${quote.slug}/`,
+}));
 ---
 
-{
-    text && (
-        <section class="mb-16">
-            <div class="flex justify-between items-baseline mb-4">
-                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500">
-                    Quote of the day
-                </h2>
-            </div>
+<section class="mb-16">
+    <div class="flex justify-between items-baseline mb-4">
+        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500">
+            Quote of the day
+        </h2>
+    </div>
+    {parsedQuotes.map(({ text, source, href }, i) => text && (
+        <div data-quote-card style={i > 0 ? "display:none" : undefined}>
             <div class="relative rounded-lg border border-gray-100 bg-gray-50 px-7 py-6">
                 <div
                     class="pointer-events-none absolute -top-1 left-4 select-none font-serif text-7xl leading-none text-gray-200"
@@ -63,12 +60,22 @@ const { text, source } = parseQuote(quote.body ?? "");
                     </p>
                 )}
                 <a
-                    href={`/${quote.collection}/${quote.slug}/`}
+                    href={href}
                     class="absolute bottom-3 right-4 text-xs text-gray-300 hover:text-gray-500 transition-colors"
                 >
                     ↗
                 </a>
             </div>
-        </section>
-    )
-}
+        </div>
+    ))}
+</section>
+
+<script>
+    const cards = document.querySelectorAll<HTMLElement>("[data-quote-card]");
+    if (cards.length > 0) {
+        const dayIndex = Math.floor(Date.now() / 86_400_000) % cards.length;
+        cards.forEach((card, i) => {
+            card.style.display = i === dayIndex ? "" : "none";
+        });
+    }
+</script>

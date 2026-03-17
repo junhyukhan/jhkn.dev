@@ -30,10 +30,12 @@ function parseQuote(body: string): { text: string; source: string | null } {
     return { text, source };
 }
 
-const parsedQuotes = quotes.map((quote) => ({
-    ...parseQuote(quote.body ?? ""),
-    href: `/${quote.collection}/${quote.slug}/`,
-}));
+const parsedQuotes = quotes
+    .map((quote) => ({
+        ...parseQuote(quote.body ?? ""),
+        href: `/${quote.collection}/${quote.slug}/`,
+    }))
+    .filter(({ text }) => Boolean(text));
 ---
 
 <section class="mb-16">
@@ -42,7 +44,7 @@ const parsedQuotes = quotes.map((quote) => ({
             Quote of the day
         </h2>
     </div>
-    {parsedQuotes.map(({ text, source, href }, i) => text && (
+    {parsedQuotes.map(({ text, source, href }, i) => (
         <div data-quote-card style={i > 0 ? "display:none" : undefined}>
             <div class="relative rounded-lg border border-gray-100 bg-gray-50 px-7 py-6">
                 <div

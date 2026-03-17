@@ -1,0 +1,69 @@
+---
+import { getCollection } from "astro:content";
+
+const quotes = (await getCollection("notes")).filter((note) =>
+    note.data.tags?.includes("quote")
+);
+
+if (quotes.length === 0) {
+    return;
+}
+
+// Rotate every 3 days deterministically
+const DAY_MS = 1000 * 60 * 60 * 24;
+const ROTATION_DAYS = 3;
+const dayIndex = Math.floor(Date.now() / (DAY_MS * ROTATION_DAYS));
+const quote = quotes[dayIndex % quotes.length];
+
+function parseQuote(body: string): { text: string; source: string | null } {
+    const paragraphs = body
+        .trim()
+        .split(/\n\n+/)
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+    if (paragraphs.length === 0) return { text: "", source: null };
+
+    // Strip surrounding curly/straight quotes from the quote text
+    const text = paragraphs[0].replace(/^["""'']|["""'']$/g, "").trim();
+
+    if (paragraphs.length === 1) return { text, source: null };
+
+    // Last paragraph is the source — strip wiki link syntax [[...]] → inner text
+    const raw = paragraphs[paragraphs.length - 1];
+    const source = raw.replace(/\[\[([^\]]+)\]\]/g, "$1").trim();
+
+    return { text, source };
+}
+
+const { text, source } = parseQuote(quote.body ?? "");
+---
+
+{
+    text && (
+        <section class="mb-16">
+            <div class="flex justify-between items-baseline mb-4">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500">
+                    Quote of the day
+                </h2>
+                <span class="text-xs text-gray-400">changes every 3 days</span>
+            </div>
+            <div class="relative rounded-lg border border-gray-100 bg-gray-50 px-7 py-6">
+                <div
+                    class="pointer-events-none absolute -top-1 left-4 select-none font-serif text-7xl leading-none text-gray-200"
+                    aria-hidden="true"
+                >
+                    &ldquo;
+                </div>
+                <blockquote class="relative mt-3 text-[0.95rem] leading-relaxed text-gray-700 italic">
+                    {text}
+                </blockquote>
+                {source && (
+                    <p class="mt-4 text-sm text-gray-400">
+                        &mdash;&thinsp;{source}
+                    </p>
+                )}
+            </div>
+        </section>
+    )
+}

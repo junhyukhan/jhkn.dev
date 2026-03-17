@@ -2,6 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
 import NoteList from "../components/NoteList.astro";
+import QuoteOfDay from "../components/QuoteOfDay.astro";
 import { getFeaturedNotes } from "../utils/noteGrouping";
 
 const pageTitle = "JHKN.DEV";
@@ -20,6 +21,8 @@ const recentNotes = allNotes
             This is where I document what I learn and build.
         </p>
     </section>
+
+    <QuoteOfDay />
 
     {featuredNotes.length > 0 && (
         <section class="mb-16">

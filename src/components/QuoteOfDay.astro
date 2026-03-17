@@ -1,0 +1,83 @@
+---
+import { getCollection } from "astro:content";
+
+const quotes = (await getCollection("notes")).filter((note) =>
+    note.data.tags?.includes("quote")
+);
+
+if (quotes.length === 0) {
+    return;
+}
+
+function parseQuote(body: string): { text: string; source: string | null } {
+    const paragraphs = body
+        .trim()
+        .split(/\n\n+/)
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+    if (paragraphs.length === 0) return { text: "", source: null };
+
+    // Strip surrounding curly/straight quotes from the quote text
+    const text = paragraphs[0].replace(/^["""'']|["""'']$/g, "").trim();
+
+    if (paragraphs.length === 1) return { text, source: null };
+
+    // Last paragraph is the source — strip wiki link syntax [[...]] → inner text
+    const raw = paragraphs[paragraphs.length - 1];
+    const source = raw.replace(/\[\[([^\]]+)\]\]/g, "$1").trim();
+
+    return { text, source };
+}
+
+const parsedQuotes = quotes
+    .map((quote) => ({
+        ...parseQuote(quote.body ?? ""),
+        href: `/${quote.collection}/${quote.slug}/`,
+    }))
+    .filter(({ text }) => Boolean(text));
+---
+
+<section class="mb-16">
+    <div class="flex justify-between items-baseline mb-4">
+        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500">
+            Quote of the day
+        </h2>
+    </div>
+    {parsedQuotes.map(({ text, source, href }, i) => (
+        <div data-quote-card style={i > 0 ? "display:none" : undefined}>
+            <div class="relative rounded-lg border border-gray-100 bg-gray-50 px-7 py-6">
+                <div
+                    class="pointer-events-none absolute -top-1 left-4 select-none font-serif text-7xl leading-none text-gray-200"
+                    aria-hidden="true"
+                >
+                    &ldquo;
+                </div>
+                <blockquote class="relative mt-3 text-[0.95rem] leading-relaxed text-gray-700 italic">
+                    {text}
+                </blockquote>
+                {source && (
+                    <p class="mt-4 text-sm text-gray-400">
+                        &mdash;&thinsp;{source}
+                    </p>
+                )}
+                <a
+                    href={href}
+                    class="absolute bottom-3 right-4 text-xs text-gray-300 hover:text-gray-500 transition-colors"
+                >
+                    ↗
+                </a>
+            </div>
+        </div>
+    ))}
+</section>
+
+<script>
+    const cards = document.querySelectorAll<HTMLElement>("[data-quote-card]");
+    if (cards.length > 0) {
+        const dayIndex = Math.floor(Date.now() / 86_400_000) % cards.length;
+        cards.forEach((card, i) => {
+            card.style.display = i === dayIndex ? "" : "none";
+        });
+    }
+</script>

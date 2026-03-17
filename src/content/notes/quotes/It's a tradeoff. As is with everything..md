@@ -4,5 +4,4 @@ tags:
 created: 2025-09-12 02:36
 edited: 2025-09-12 02:36
 ---
-nice quote.
-Everything is a tradeoff.
+It's a tradeoff. As is with everything.

@@ -253,12 +253,13 @@ const totalCount = sortedNotes.length;
 		if (!el) return;
 		el.addEventListener("input", (e) => {
 			clearTimeout(debounceTimer);
+			const value = (e.target as HTMLInputElement).value;
 			const otherId = id === "search" ? "search-mobile" : "search";
 			const other = document.getElementById(otherId) as HTMLInputElement | null;
-			if (other) other.value = (e.target as HTMLInputElement).value;
+			if (other) other.value = value;
+			query = value;
+			syncURL();
 			debounceTimer = setTimeout(() => {
-				query = (e.target as HTMLInputElement).value;
-				syncURL();
 				applyFilters();
 			}, 150);
 		});

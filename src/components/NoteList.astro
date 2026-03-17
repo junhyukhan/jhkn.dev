@@ -1,6 +1,6 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import NoteListItem from "./NoteListItem.astro";
+import { getNoteTitle } from "../utils/note";
 
 interface Props {
     notes: CollectionEntry<"notes">[];
@@ -10,5 +10,21 @@ const { notes } = Astro.props;
 ---
 
 <ul class="font-mono text-sm space-y-2">
-    {notes.map((note) => <NoteListItem note={note} />)}
+    {notes.map((note) => (
+        <li>
+            <a
+                href={`/${note.collection}/${note.slug}/`}
+                class="flex items-baseline group"
+            >
+                <span class="text-gray-400 mr-4 shrink-0">
+                    {note.data.created
+                        ? new Date(note.data.created).toISOString().slice(0, 10)
+                        : ""}
+                </span>
+                <span class="group-hover:underline text-blue-600">
+                    {getNoteTitle(note)}
+                </span>
+            </a>
+        </li>
+    ))}
 </ul>

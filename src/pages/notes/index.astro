@@ -160,17 +160,13 @@ const totalCount = sortedNotes.length;
 </BaseLayout>
 
 <script>
-	// Initialize state from URL params
-	const initParams = new URLSearchParams(location.search);
-	const initSort = (initParams.get("sort") ?? "date-desc").split("-");
-
-	let query = initParams.get("q") ?? "";
-	let sortKey = initSort[0] ?? "date";
-	let sortDir = initSort[1] ?? "desc";
-	// Force re-sort on first applyFilters since DOM is always built date-desc
+	// State — initialized from URL by restoreUIFromState() via pageshow
+	let query = "";
+	let sortKey = "date";
+	let sortDir = "desc";
 	let prevSortKey = "";
 	let prevSortDir = "";
-	const selectedTags = new Set<string>(initParams.getAll("tags"));
+	const selectedTags = new Set<string>();
 
 	const notesList = document.getElementById("notes-list") as HTMLUListElement;
 	const noteCount = document.getElementById("note-count") as HTMLParagraphElement;
@@ -233,8 +229,6 @@ const totalCount = sortedNotes.length;
 	}
 
 	function restoreUIFromState() {
-		// Always re-read from the URL so bfcache restores get fresh values
-		// (the module-level variables may be stale if the page was cached)
 		const params = new URLSearchParams(location.search);
 		const sortParam = (params.get("sort") ?? "date-desc").split("-");
 		query = params.get("q") ?? "";
@@ -242,7 +236,6 @@ const totalCount = sortedNotes.length;
 		sortDir = sortParam[1] ?? "desc";
 		selectedTags.clear();
 		params.getAll("tags").forEach((t) => selectedTags.add(t));
-		// Force re-sort since state was re-read
 		prevSortKey = "";
 		prevSortDir = "";
 

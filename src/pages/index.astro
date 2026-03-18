@@ -4,14 +4,20 @@ import { getCollection } from "astro:content";
 import NoteList from "../components/NoteList.astro";
 import QuoteOfDay from "../components/QuoteOfDay.astro";
 import { getFeaturedNotes } from "../utils/noteGrouping";
+import { getNoteTitle } from "../utils/note";
 
 const pageTitle = "JHKN.DEV";
 const allNotes = await getCollection("notes");
 
 const featuredNotes = getFeaturedNotes(allNotes);
 const recentNotes = allNotes
+    .filter(
+        (note) =>
+            !note.slug.startsWith("quotes/") &&
+            !note.slug.startsWith("leetcode/"),
+    )
     .sort((a, b) => b.data.created.valueOf() - a.data.created.valueOf())
-    .slice(0, 3);
+    .slice(0, 5);
 ---
 
 <BaseLayout pageTitle={pageTitle}>
@@ -26,18 +32,43 @@ const recentNotes = allNotes
 
     {featuredNotes.length > 0 && (
         <section class="mb-16">
-            <div class="flex justify-between items-baseline mb-8">
+            <div class="flex justify-between items-baseline mb-6">
                 <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500">
                     Featured Work
                 </h2>
             </div>
 
-            <NoteList notes={featuredNotes} />
+            <div class="space-y-3">
+                {featuredNotes.map((note) => (
+                    <a
+                        href={`/${note.collection}/${note.slug}/`}
+                        class="block group border border-gray-200 rounded-lg p-4 hover:border-gray-400 transition-colors"
+                    >
+                        <div class="flex items-baseline justify-between gap-4">
+                            <span class="font-medium text-blue-600 group-hover:underline">
+                                {getNoteTitle(note)}
+                            </span>
+                            <span class="text-gray-400 text-xs font-mono shrink-0">
+                                {new Date(note.data.created).toISOString().slice(0, 10)}
+                            </span>
+                        </div>
+                        {note.data.tags && note.data.tags.length > 0 && (
+                            <div class="flex gap-2 flex-wrap mt-2">
+                                {note.data.tags.map((tag) => (
+                                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                        #{tag}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </a>
+                ))}
+            </div>
         </section>
     )}
 
     <section>
-        <div class="flex justify-between items-baseline mb-8">
+        <div class="flex justify-between items-baseline mb-6">
             <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500">
                 Recent Notes
             </h2>
@@ -49,6 +80,6 @@ const recentNotes = allNotes
             </a>
         </div>
 
-        <NoteList notes={recentNotes} />
+        <NoteList notes={recentNotes} showTags={true} />
     </section>
 </BaseLayout>

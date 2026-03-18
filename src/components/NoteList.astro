@@ -4,25 +4,35 @@ import { getNoteTitle } from "../utils/note";
 
 interface Props {
     notes: CollectionEntry<"notes">[];
+    showTags?: boolean;
 }
 
-const { notes } = Astro.props;
+const { notes, showTags = false } = Astro.props;
 ---
 
-<ul class="font-mono text-sm space-y-2">
+<ul class="font-mono text-sm space-y-3">
     {notes.map((note) => (
         <li>
             <a
                 href={`/${note.collection}/${note.slug}/`}
-                class="flex items-baseline group"
+                class="flex items-start group"
             >
-                <span class="text-gray-400 mr-4 shrink-0">
+                <span class="text-gray-400 mr-4 shrink-0 pt-px">
                     {note.data.created
                         ? new Date(note.data.created).toISOString().slice(0, 10)
                         : ""}
                 </span>
-                <span class="group-hover:underline text-blue-600">
-                    {getNoteTitle(note)}
+                <span class="flex flex-col gap-1">
+                    <span class="group-hover:underline text-blue-600">
+                        {getNoteTitle(note)}
+                    </span>
+                    {showTags && note.data.tags && note.data.tags.length > 0 && (
+                        <span class="flex gap-2 flex-wrap">
+                            {note.data.tags.map((tag) => (
+                                <span class="text-gray-400 text-xs">#{tag}</span>
+                            ))}
+                        </span>
+                    )}
                 </span>
             </a>
         </li>

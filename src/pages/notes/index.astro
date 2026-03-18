@@ -232,19 +232,29 @@ const totalCount = sortedNotes.length;
 		noteCount.textContent = `${visible} note${visible !== 1 ? "s" : ""}`;
 	}
 
-	// Apply initial state from URL on load
-	(["search", "search-mobile"] as const).forEach((id) => {
-		const el = document.getElementById(id) as HTMLInputElement | null;
-		if (el) el.value = query;
-	});
-	document.querySelectorAll<HTMLButtonElement>(".sort-btn").forEach((b) => {
-		const active = b.dataset.sort === sortKey && b.dataset.dir === sortDir;
-		b.classList.toggle("underline", active);
-		b.classList.toggle("text-gray-700", active);
-		b.setAttribute("aria-pressed", String(active));
-	});
-	updateTagStyles();
-	applyFilters();
+	function restoreUIFromState() {
+		(["search", "search-mobile"] as const).forEach((id) => {
+			const el = document.getElementById(id) as HTMLInputElement | null;
+			if (el) el.value = query;
+		});
+		document.querySelectorAll<HTMLButtonElement>(".sort-btn").forEach((b) => {
+			const active = b.dataset.sort === sortKey && b.dataset.dir === sortDir;
+			b.classList.toggle("underline", active);
+			b.classList.toggle("text-gray-700", active);
+			b.setAttribute("aria-pressed", String(active));
+		});
+		updateTagStyles();
+		// Auto-open the mobile filter panel if there are active filters
+		if (query || selectedTags.size > 0 || sortKey !== "date" || sortDir !== "desc") {
+			const details = document.querySelector<HTMLDetailsElement>("details.xl\\:hidden");
+			if (details) details.open = true;
+		}
+		applyFilters();
+	}
+
+	// pageshow fires on both fresh loads and bfcache restores, and runs after
+	// any browser form-state restoration, ensuring our values aren't overwritten.
+	window.addEventListener("pageshow", restoreUIFromState);
 
 	// Search inputs — desktop (#search) and mobile (#search-mobile), kept in sync
 	let debounceTimer: ReturnType<typeof setTimeout>;

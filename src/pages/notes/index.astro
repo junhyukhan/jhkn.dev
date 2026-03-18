@@ -265,9 +265,17 @@ const totalCount = sortedNotes.length;
 		applyFilters();
 	}
 
-	// pageshow fires on both fresh loads and bfcache restores, ensuring
-	// the UI always reflects the actual URL regardless of cache behavior.
-	window.addEventListener("pageshow", restoreUIFromState);
+	// pageshow fires on both fresh loads and bfcache restores.
+	// When persisted=true (bfcache), the browser may restore the DOM *after*
+	// pageshow fires — including clearing autocomplete="off" inputs. Deferring
+	// with setTimeout ensures we run after bfcache restoration is complete.
+	window.addEventListener("pageshow", (e) => {
+		if (e.persisted) {
+			setTimeout(restoreUIFromState, 0);
+		} else {
+			restoreUIFromState();
+		}
+	});
 
 	// Search inputs — desktop (#search) and mobile (#search-mobile), kept in sync
 	let debounceTimer: ReturnType<typeof setTimeout>;

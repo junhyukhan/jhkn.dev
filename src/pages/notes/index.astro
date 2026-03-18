@@ -233,6 +233,19 @@ const totalCount = sortedNotes.length;
 	}
 
 	function restoreUIFromState() {
+		// Always re-read from the URL so bfcache restores get fresh values
+		// (the module-level variables may be stale if the page was cached)
+		const params = new URLSearchParams(location.search);
+		const sortParam = (params.get("sort") ?? "date-desc").split("-");
+		query = params.get("q") ?? "";
+		sortKey = sortParam[0] ?? "date";
+		sortDir = sortParam[1] ?? "desc";
+		selectedTags.clear();
+		params.getAll("tags").forEach((t) => selectedTags.add(t));
+		// Force re-sort since state was re-read
+		prevSortKey = "";
+		prevSortDir = "";
+
 		(["search", "search-mobile"] as const).forEach((id) => {
 			const el = document.getElementById(id) as HTMLInputElement | null;
 			if (el) el.value = query;
@@ -252,8 +265,8 @@ const totalCount = sortedNotes.length;
 		applyFilters();
 	}
 
-	// pageshow fires on both fresh loads and bfcache restores, and runs after
-	// any browser form-state restoration, ensuring our values aren't overwritten.
+	// pageshow fires on both fresh loads and bfcache restores, ensuring
+	// the UI always reflects the actual URL regardless of cache behavior.
 	window.addEventListener("pageshow", restoreUIFromState);
 
 	// Search inputs — desktop (#search) and mobile (#search-mobile), kept in sync

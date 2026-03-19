@@ -25,24 +25,24 @@ const title = getNoteTitle(entry);
     <article class="prose prose-slate max-w-none">
         <header class="mb-10">
             <h1 class="text-2xl font-bold mb-2 tracking-tight">{title}</h1>
-            <time class="text-sm text-gray-400 font-mono tabular-nums">
-                {entry.data.created.toISOString().slice(0, 10)}
+            <time class="text-sm text-gray-400 font-mono">
+                {entry.data.created.toDateString()}
             </time>
         </header>
         <div class="font-mono text-sm leading-relaxed">
             <Content />
         </div>
-        <footer class="mt-12 pt-8 border-t border-gray-100 space-y-6">
-            <div>
-                <span
-                    class="font-mono text-xs text-gray-400 uppercase tracking-widest"
-                    >Tags</span
-                >
-                <div class="mt-2">
-                    <TagList tags={entry.data.tags} />
-                </div>
-            </div>
-            <Backlinks backlinks={backlinks} />
-        </footer>
     </article>
+    <footer class="mt-12 pt-8 border-t border-gray-100 space-y-6">
+        <div>
+            <span
+                class="font-mono text-xs text-gray-400 uppercase tracking-widest"
+                >Tags</span
+            >
+            <div class="mt-2">
+                <TagList tags={entry.data.tags} />
+            </div>
+        </div>
+        <Backlinks backlinks={backlinks} />
+    </footer>
 </BaseLayout>

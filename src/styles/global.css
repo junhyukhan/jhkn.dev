@@ -23,7 +23,18 @@ a:hover {
   text-decoration: underline;
 }
 
-/* Wiki Links Styling */
+/* ── External / regular links in prose ── */
+
+.prose a {
+  @apply text-blue-600 underline decoration-blue-300 underline-offset-2 transition-colors duration-150;
+}
+
+.prose a:hover {
+  @apply text-blue-800 decoration-blue-500;
+}
+
+/* ── Wiki links (valid internal) ── */
+
 .prose a.internal {
   @apply no-underline bg-blue-500/10 text-blue-600 px-[0.2em] rounded-[0.2em] transition-all duration-200;
 }
@@ -32,8 +43,10 @@ a:hover {
   @apply bg-blue-500/20 no-underline;
 }
 
+/* ── Wiki links (broken / invalid destination) ── */
+
 .prose a.new {
-  @apply text-inherit no-underline pointer-events-none cursor-text;
+  @apply text-gray-400 no-underline bg-transparent pointer-events-none cursor-text;
 }
 
 /* ── Prose heading hierarchy ── */
@@ -70,7 +83,7 @@ a:hover {
 }
 
 .prose ol {
-  @apply my-4 pl-5;
+  @apply my-4 pl-8;
 }
 
 .prose li {

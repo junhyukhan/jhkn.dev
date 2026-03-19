@@ -11,7 +11,7 @@ const classes = config[size as keyof typeof config] || config.sm;
 
 <a
     href={`/notes?tags=${tag}`}
-    class={`inline-block font-mono text-gray-600 bg-gray-100 rounded hover:bg-gray-200 transition-colors no-underline ${classes}`}
+    class={`inline-block font-mono text-gray-500 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 hover:text-gray-700 transition-all duration-150 no-underline ${classes}`}
 >
     #{tag}
 </a>

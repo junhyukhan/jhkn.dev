@@ -138,13 +138,21 @@ function extractContext(sourceBody: string, targetNote: Note): string {
   return "";
 }
 
+// Module-level cache — avoids recomputing the O(N²) backlinks map
+// when multiple Astro pages call this during a single build.
+let cachedMap: Map<string, BacklinkWithContext[]> | null = null;
+let cachedNoteCount = 0;
+
 /**
  * Build a map of backlinks with context snippets for all notes.
  * Each backlink includes the paragraph where the link occurs.
+ * Results are cached at the module level across pages in the same build.
  */
 export function buildBacklinksWithContextMap(
   allNotes: Note[]
 ): Map<string, BacklinkWithContext[]> {
+  if (cachedMap && cachedNoteCount === allNotes.length) return cachedMap;
+
   const map = new Map<string, BacklinkWithContext[]>();
 
   for (const note of allNotes) {
@@ -178,5 +186,7 @@ export function buildBacklinksWithContextMap(
     );
   }
 
+  cachedMap = map;
+  cachedNoteCount = allNotes.length;
   return map;
 }

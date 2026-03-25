@@ -2,9 +2,15 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
 import { getNoteTitle } from "../../utils/note";
+import { buildBacklinksWithContextMap } from "../../utils/backlinks";
 
 const pageTitle = "Notes";
 const allNotes = await getCollection("notes");
+
+const backlinksMap = buildBacklinksWithContextMap(allNotes);
+const backlinkCountById = new Map<string, number>(
+	allNotes.map((note) => [note.id, backlinksMap.get(note.id)?.length ?? 0])
+);
 
 // Collect unique tags sorted by frequency
 const tagCounts: Record<string, number> = {};
@@ -51,6 +57,7 @@ const totalCount = sortedNotes.length;
 						<button class="sort-btn touch-manipulation" data-sort="date" data-dir="asc" aria-pressed="false">Date ↑</button>
 						<button class="sort-btn touch-manipulation" data-sort="title" data-dir="asc" aria-pressed="false">A→Z</button>
 						<button class="sort-btn touch-manipulation" data-sort="title" data-dir="desc" aria-pressed="false">Z→A</button>
+						<button class="sort-btn touch-manipulation" data-sort="backlinks" data-dir="desc" aria-pressed="false">Most linked</button>
 					</div>
 				</div>
 				<div class="font-mono text-xs">
@@ -101,6 +108,7 @@ const totalCount = sortedNotes.length;
 							<button class="sort-btn touch-manipulation" data-sort="date" data-dir="asc" aria-pressed="false">Date ↑</button>
 							<button class="sort-btn touch-manipulation" data-sort="title" data-dir="asc" aria-pressed="false">A→Z</button>
 							<button class="sort-btn touch-manipulation" data-sort="title" data-dir="desc" aria-pressed="false">Z→A</button>
+							<button class="sort-btn touch-manipulation" data-sort="backlinks" data-dir="desc" aria-pressed="false">Most linked</button>
 						</div>
 					</div>
 					<div class="font-mono text-xs">
@@ -133,11 +141,13 @@ const totalCount = sortedNotes.length;
 					sortedNotes.map((note) => {
 						const title = getNoteTitle(note);
 						const date = note.data.created ? new Date(note.data.created).toISOString().slice(0, 10) : "";
+						const count = backlinkCountById.get(note.id) ?? 0;
 						return (
 							<li
 								data-tags={JSON.stringify(note.data.tags || [])}
 								data-date={date}
 								data-title={title}
+								data-backlinks={count}
 							>
 								<a
 									href={`/${note.collection}/${note.slug}/`}
@@ -145,6 +155,9 @@ const totalCount = sortedNotes.length;
 								>
 									<span class="text-xs text-gray-400 mr-4 shrink-0">{date}</span>
 									<span class="group-hover:underline text-blue-600">{title}</span>
+									{count > 0 && (
+										<span class="ml-2 shrink-0 font-mono text-[10px] text-gray-400 tabular-nums" title={`${count} backlink${count !== 1 ? "s" : ""}`}>↩ {count}</span>
+									)}
 								</a>
 							</li>
 						);
@@ -178,6 +191,7 @@ const totalCount = sortedNotes.length;
 		tags: JSON.parse(li.dataset.tags || "[]") as string[],
 		date: li.dataset.date ?? "",
 		title: (li.dataset.title ?? "").toLowerCase(),
+		backlinks: parseInt(li.dataset.backlinks ?? "0", 10),
 	}));
 
 	function syncURL() {
@@ -199,6 +213,9 @@ const totalCount = sortedNotes.length;
 				if (sortKey === "date") {
 					const diff = a.date.localeCompare(b.date);
 					return sortDir === "desc" ? -diff : diff;
+				} else if (sortKey === "backlinks") {
+					const diff = b.backlinks - a.backlinks;
+					return diff !== 0 ? diff : b.date.localeCompare(a.date);
 				} else {
 					const diff = a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
 					return sortDir === "asc" ? diff : -diff;

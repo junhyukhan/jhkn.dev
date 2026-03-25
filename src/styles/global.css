@@ -136,8 +136,32 @@ a:hover {
 
 /* ── Backlink context snippets ── */
 
-.backlink-item.has-context {
+.backlink-item.has-context .backlink-chevron {
   cursor: pointer;
+}
+
+/* Override prose underline on backlink titles — first click opens context, not navigates */
+.backlink-item.has-context a {
+  text-decoration: none;
+}
+
+/* Only show the link arrow when context is open (clicking now navigates) */
+.backlink-item .backlink-arrow {
+  display: none;
+}
+
+.backlink-item.active .backlink-arrow {
+  display: inline;
+}
+
+/* Restore link appearance once context is open */
+.backlink-item.active a:hover {
+  text-decoration: underline;
+}
+
+/* Rotate chevron when context is open */
+.backlink-item.active .backlink-chevron {
+  transform: rotate(180deg);
 }
 
 .backlink-context {

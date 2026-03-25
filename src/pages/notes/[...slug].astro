@@ -23,22 +23,26 @@ const title = getNoteTitle(entry);
 
 <BaseLayout pageTitle={title}>
     <article class="prose prose-slate max-w-none">
-        <div class="mb-8 border-b pb-4">
-            <h1 class="text-2xl font-bold mb-1">{title}</h1>
-            <time class="text-sm text-gray-500 font-mono">
+        <header class="mb-10">
+            <h1 class="text-2xl font-bold mb-2 tracking-tight">{title}</h1>
+            <time class="text-sm text-gray-400 font-mono">
                 {entry.data.created.toDateString()}
             </time>
-        </div>
+        </header>
         <div class="font-mono text-sm leading-relaxed">
             <Content />
         </div>
-        <div class="mt-8 pt-8 border-t border-gray-200">
+    </article>
+    <footer class="mt-12 pt-8 border-t border-gray-100 space-y-6">
+        <div>
             <span
-                class="font-mono text-sm text-gray-500 mr-2 uppercase tracking-wider"
+                class="font-mono text-xs text-gray-400 uppercase tracking-widest"
                 >Tags</span
             >
-            <TagList tags={entry.data.tags} />
+            <div class="mt-2">
+                <TagList tags={entry.data.tags} />
+            </div>
         </div>
         <Backlinks backlinks={backlinks} />
-    </article>
+    </footer>
 </BaseLayout>

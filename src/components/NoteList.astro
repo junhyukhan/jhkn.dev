@@ -9,19 +9,19 @@ interface Props {
 const { notes } = Astro.props;
 ---
 
-<ul class="font-mono text-sm space-y-2">
+<ul class="font-mono text-sm space-y-1">
     {notes.map((note) => (
         <li>
             <a
                 href={`/${note.collection}/${note.slug}/`}
-                class="flex items-baseline group"
+                class="flex items-baseline group py-1 -mx-2 px-2 rounded transition-colors duration-150 hover:bg-gray-50 hover:no-underline"
             >
-                <span class="text-gray-400 mr-4 shrink-0">
+                <span class="text-gray-300 mr-4 shrink-0 tabular-nums">
                     {note.data.created
                         ? new Date(note.data.created).toISOString().slice(0, 10)
                         : ""}
                 </span>
-                <span class="group-hover:underline text-blue-600">
+                <span class="text-gray-700 group-hover:text-blue-600 transition-colors duration-150">
                     {getNoteTitle(note)}
                 </span>
             </a>

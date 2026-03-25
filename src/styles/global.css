@@ -16,13 +16,32 @@ html {
 a {
   color: inherit;
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
 a:hover {
   text-decoration: underline;
 }
 
-/* Wiki Links Styling */
+/*
+ * Link styles in prose content (note pages):
+ *
+ *   1. External links  (.prose a)          → blue + underline
+ *   2. Wiki links      (.prose a.internal) → blue + bg highlight, no underline
+ *   3. Broken wiki     (.prose a.new)      → gray text, non-interactive
+ *
+ * Classes .internal / .new are added by remark-wiki-link plugin.
+ * .new = link target not found in src/content/notes/ at build time.
+ */
+
+.prose a {
+  @apply text-blue-600 underline decoration-blue-300 underline-offset-2 transition-colors duration-150;
+}
+
+.prose a:hover {
+  @apply text-blue-800 decoration-blue-500;
+}
+
 .prose a.internal {
   @apply no-underline bg-blue-500/10 text-blue-600 px-[0.2em] rounded-[0.2em] transition-all duration-200;
 }
@@ -32,12 +51,72 @@ a:hover {
 }
 
 .prose a.new {
-  @apply text-inherit no-underline pointer-events-none cursor-text;
+  @apply text-gray-400 no-underline bg-transparent pointer-events-none cursor-text;
 }
 
-/* Inline Code Styling */
+/* ── Prose heading hierarchy ── */
+
+.prose h2 {
+  @apply text-xl font-semibold mt-10 mb-4 tracking-tight;
+}
+
+.prose h3 {
+  @apply text-lg font-semibold mt-8 mb-3 tracking-tight;
+}
+
+.prose h4 {
+  @apply text-base font-semibold mt-6 mb-2;
+}
+
+/* ── Blockquote ── */
+
+.prose blockquote {
+  @apply border-l-2 border-gray-300 pl-4 italic text-gray-600 my-6;
+  font-style: italic;
+}
+
+/* ── Horizontal rules ── */
+
+.prose hr {
+  @apply my-10 border-t border-gray-200;
+}
+
+/* ── Lists ── */
+
+.prose ul {
+  @apply my-4 pl-5;
+}
+
+.prose ol {
+  @apply my-4 pl-8;
+}
+
+.prose li {
+  @apply my-1;
+}
+
+/* ── Tables ── */
+
+.prose table {
+  @apply w-full text-sm my-6 border-collapse;
+}
+
+.prose thead th {
+  @apply text-left font-semibold text-gray-700 border-b-2 border-gray-200 pb-2 pr-4;
+}
+
+.prose tbody td {
+  @apply border-b border-gray-100 py-2 pr-4 text-gray-600;
+}
+
+.prose tbody tr:last-child td {
+  @apply border-b-0;
+}
+
+/* ── Inline Code Styling ── */
+
 .prose code {
-  @apply font-mono text-[0.9em] bg-gray-100 px-1.5 py-0.5 rounded text-gray-800 font-medium;
+  @apply font-mono text-[0.875em] bg-gray-100 px-1.5 py-0.5 rounded text-gray-800 font-medium;
 }
 
 .prose code::before,
@@ -45,9 +124,10 @@ a:hover {
   content: none;
 }
 
-/* Code Block Styling */
+/* ── Code Block Styling ── */
+
 .prose pre {
-  @apply !bg-gray-100 rounded-lg p-4 my-6 overflow-x-auto border border-gray-200;
+  @apply !bg-gray-50 rounded-lg p-5 my-8 overflow-x-auto border border-gray-200 leading-relaxed;
 }
 
 .prose pre code {

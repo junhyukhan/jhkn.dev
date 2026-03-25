@@ -17,7 +17,7 @@ const { backlinks } = Astro.props;
       </span>
       <ul class="mt-2 space-y-1">
         {backlinks.map(({ note, context }) => (
-          <li class="backlink-item rounded-md px-2 py-1.5 -mx-2 transition-colors duration-150">
+          <li class:list={["backlink-item rounded-md px-2 py-1.5 -mx-2 transition-colors duration-150", { "has-context": !!context }]}>
             <div class="flex items-baseline gap-2 flex-wrap">
               <a
                 href={`/${note.collection}/${note.slug}/`}
@@ -38,7 +38,7 @@ const { backlinks } = Astro.props;
             {context && (
               <div
                 class="backlink-context font-mono text-xs text-gray-400 italic mt-1 pl-3 border-l-2 border-gray-100"
-                set:html={`"${context}"`}
+                set:html={`\u201C${context}\u201D`}
               />
             )}
           </li>
@@ -49,7 +49,7 @@ const { backlinks } = Astro.props;
 }
 
 <script>
-  document.querySelectorAll<HTMLLIElement>(".backlink-item").forEach((item) => {
+  document.querySelectorAll<HTMLLIElement>(".backlink-item.has-context").forEach((item) => {
     item.addEventListener("click", (e) => {
       // Let link clicks navigate when context is already open
       if ((e.target as HTMLElement).closest("a")) {

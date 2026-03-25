@@ -139,42 +139,6 @@ function extractContext(sourceBody: string, targetNote: Note): string {
 }
 
 /**
- * Build a map of all backlinks for all notes (O(n²) but computed once at build time)
- * Returns a Map where keys are note IDs and values are arrays of notes that link to them
- */
-export function buildBacklinksMap(allNotes: Note[]): Map<string, Note[]> {
-  const backlinksMap = new Map<string, Note[]>();
-
-  for (const note of allNotes) {
-    backlinksMap.set(note.id, []);
-  }
-
-  for (const sourceNote of allNotes) {
-    const links = extractWikiLinks(sourceNote.body || "");
-
-    for (const targetNote of allNotes) {
-      if (sourceNote.id === targetNote.id) continue;
-
-      for (const link of links) {
-        if (linkMatchesNote(link, targetNote)) {
-          backlinksMap.get(targetNote.id)!.push(sourceNote);
-          break;
-        }
-      }
-    }
-  }
-
-  for (const [, backlinks] of backlinksMap) {
-    backlinks.sort(
-      (a, b) =>
-        new Date(b.data.created).valueOf() - new Date(a.data.created).valueOf()
-    );
-  }
-
-  return backlinksMap;
-}
-
-/**
  * Build a map of backlinks with context snippets for all notes.
  * Each backlink includes the paragraph where the link occurs.
  */

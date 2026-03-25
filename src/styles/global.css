@@ -136,8 +136,8 @@ a:hover {
 
 /* ── Backlink context snippets ── */
 
-.backlink-item {
-  cursor: default;
+.backlink-item.has-context {
+  cursor: pointer;
 }
 
 .backlink-context {

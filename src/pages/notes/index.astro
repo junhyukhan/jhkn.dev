@@ -156,7 +156,7 @@ const totalCount = sortedNotes.length;
 									<span class="text-xs text-gray-400 mr-4 shrink-0">{date}</span>
 									<span class="group-hover:underline text-blue-600">{title}</span>
 									{count > 0 && (
-										<span class="ml-2 shrink-0 font-mono text-[10px] text-gray-400 tabular-nums">↩ {count}</span>
+										<span class="ml-2 shrink-0 font-mono text-[10px] text-gray-400 tabular-nums" title={`${count} backlink${count !== 1 ? "s" : ""}`}>↩ {count}</span>
 									)}
 								</a>
 							</li>

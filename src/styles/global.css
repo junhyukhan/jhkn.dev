@@ -133,3 +133,25 @@ a:hover {
 .prose pre code {
   @apply bg-transparent p-0 font-normal text-sm;
 }
+
+/* ── Backlink context snippets ── */
+
+.backlink-item.has-context {
+  cursor: pointer;
+}
+
+.backlink-context {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.2s ease, opacity 0.2s ease;
+}
+
+.backlink-context.open {
+  max-height: 6rem;
+  opacity: 1;
+}
+
+.backlink-item.active {
+  background-color: theme("colors.gray.50");
+}

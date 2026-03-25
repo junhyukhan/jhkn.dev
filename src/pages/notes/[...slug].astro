@@ -2,13 +2,13 @@
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getNoteTitle } from "../../utils/note";
-import { buildBacklinksMap } from "../../utils/backlinks";
+import { buildBacklinksWithContextMap } from "../../utils/backlinks";
 import TagList from "../../components/TagList.astro";
 import Backlinks from "../../components/Backlinks.astro";
 
 export async function getStaticPaths() {
     const notesEntries = await getCollection("notes");
-    const backlinksMap = buildBacklinksMap(notesEntries);
+    const backlinksMap = buildBacklinksWithContextMap(notesEntries);
 
     return notesEntries.map((entry) => ({
         params: { slug: entry.slug },

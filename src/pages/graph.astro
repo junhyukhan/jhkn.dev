@@ -28,7 +28,7 @@ const graphData = buildGraphData(allNotes);
     </div>
 
     <div id="graph-tooltip"
-      class="hidden absolute z-10 pointer-events-none bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-sm max-w-xs">
+      class="hidden absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-sm max-w-xs">
     </div>
 
     <div id="graph-container" class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50"
@@ -73,16 +73,14 @@ const graphData = buildGraphData(allNotes);
   }
   resizeCanvas();
 
-  // --- Transform state (pan only) + visual scale ---
-  let panX = 0;
-  let panY = 0;
-  let visualScale = 1;
+  // --- Transform state (zoom + pan) ---
+  let transform = { x: 0, y: 0, k: 1 };
 
   function toScreen(px: number, py: number): [number, number] {
-    return [px + panX, py + panY];
+    return [px * transform.k + transform.x, py * transform.k + transform.y];
   }
   function toWorld(sx: number, sy: number): [number, number] {
-    return [sx - panX, sy - panY];
+    return [(sx - transform.x) / transform.k, (sy - transform.y) / transform.k];
   }
 
   // --- Graph data ---
@@ -110,7 +108,7 @@ const graphData = buildGraphData(allNotes);
   const links: SimLink[] = graphData.links.map((l: any) => ({ ...l }));
 
   function nodeRadius(d: SimNode): number {
-    return Math.min(4 + d.linkCount * 1.5, 16) * visualScale;
+    return Math.min(4 + d.linkCount * 1.5, 16);
   }
 
   // --- Simulation ---
@@ -140,7 +138,8 @@ const graphData = buildGraphData(allNotes);
   function draw() {
     ctx.save();
     ctx.clearRect(0, 0, width, height);
-    ctx.translate(panX, panY);
+    ctx.translate(transform.x, transform.y);
+    ctx.scale(transform.k, transform.k);
 
     const dimmed = hoveredNode !== null;
 
@@ -155,13 +154,13 @@ const graphData = buildGraphData(allNotes);
       ctx.lineTo(t.x!, t.y!);
       if (dimmed && !isHighlighted) {
         ctx.strokeStyle = "rgba(0,0,0,0.04)";
-        ctx.lineWidth = 0.5 * visualScale;
+        ctx.lineWidth = 0.5;
       } else if (isHighlighted) {
         ctx.strokeStyle = GROUP_COLORS[hoveredNode!.group] || DEFAULT_COLOR;
-        ctx.lineWidth = 1.5 * visualScale;
+        ctx.lineWidth = 1.5;
       } else {
         ctx.strokeStyle = "rgba(0,0,0,0.1)";
-        ctx.lineWidth = 0.8 * visualScale;
+        ctx.lineWidth = 0.8;
       }
       ctx.stroke();
     }
@@ -185,19 +184,19 @@ const graphData = buildGraphData(allNotes);
 
       if (isHovered) {
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2 * visualScale;
+        ctx.lineWidth = 2;
         ctx.stroke();
       }
 
       // Draw labels for hubs or hovered/connected nodes
       const showLabel = node.linkCount >= 5 || isHovered || (dimmed && isConnected);
       if (showLabel) {
-        const fontSize = Math.max(10, Math.min(12, 9 + node.linkCount * 0.3)) * visualScale;
+        const fontSize = Math.max(10, Math.min(12, 9 + node.linkCount * 0.3));
         ctx.font = `${fontSize}px system-ui, -apple-system, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         ctx.fillStyle = dimmed && !isConnected ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0.7)";
-        ctx.fillText(node.title, node.x!, node.y! + r + 4 * visualScale);
+        ctx.fillText(node.title, node.x!, node.y! + r + 4);
       }
     }
 
@@ -236,8 +235,8 @@ const graphData = buildGraphData(allNotes);
     }
 
     if (panStart) {
-      panX = panStart.tx + (mx - panStart.x);
-      panY = panStart.ty + (my - panStart.y);
+      transform.x = panStart.tx + (mx - panStart.x);
+      transform.y = panStart.ty + (my - panStart.y);
       draw();
       return;
     }
@@ -251,7 +250,7 @@ const graphData = buildGraphData(allNotes);
       if (node) {
         const tags = node.tags.length ? node.tags.join(", ") : "none";
         tooltip.innerHTML = `
-          <div class="font-medium">${node.title}</div>
+          <a href="/notes/${node.slug}/" class="font-medium text-gray-900 hover:underline">${node.title}</a>
           <div class="text-gray-400 text-xs font-mono mt-1">${node.linkCount} connections · ${node.group}</div>
           <div class="text-gray-400 text-xs font-mono">tags: ${tags}</div>
         `;
@@ -259,7 +258,10 @@ const graphData = buildGraphData(allNotes);
         tooltip.style.left = (mx + 12) + "px";
         tooltip.style.top = (my - 10) + "px";
       } else {
-        tooltip.classList.add("hidden");
+        // Only hide if mouse isn't over the tooltip itself
+        if (!tooltip.matches(":hover")) {
+          tooltip.classList.add("hidden");
+        }
       }
       draw();
     } else if (node) {
@@ -282,7 +284,7 @@ const graphData = buildGraphData(allNotes);
       node.fy = wy;
       simulation.alphaTarget(0.3).restart();
     } else {
-      panStart = { x: mx, y: my, tx: panX, ty: panY };
+      panStart = { x: mx, y: my, tx: transform.x, ty: transform.y };
       canvas.style.cursor = "grabbing";
     }
   });
@@ -299,24 +301,32 @@ const graphData = buildGraphData(allNotes);
     canvas.style.cursor = hoveredNode ? "pointer" : "grab";
   });
 
-  canvas.addEventListener("click", (e) => {
-    if (isDragging) return;
+  // --- Zoom ---
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
-    const node = findNode(mx, my);
-    if (node) {
-      window.location.href = `/notes/${node.slug}/`;
-    }
-  });
 
-  // --- Zoom (semantic: scroll controls visual size of elements) ---
-  canvas.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    const factor = e.deltaY > 0 ? 1.1 : 0.9;
-    visualScale = Math.max(0.3, Math.min(3, visualScale * factor));
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    const newK = Math.max(0.2, Math.min(5, transform.k * factor));
+    const ratio = newK / transform.k;
+
+    transform.x = mx - ratio * (mx - transform.x);
+    transform.y = my - ratio * (my - transform.y);
+    transform.k = newK;
+
     draw();
   }, { passive: false });
+
+  // --- Hide tooltip when mouse leaves it ---
+  tooltip.addEventListener("mouseleave", () => {
+    tooltip.classList.add("hidden");
+    hoveredNode = null;
+    connectedIds = null;
+    canvas.style.cursor = "grab";
+    draw();
+  });
 
   // --- Resize ---
   window.addEventListener("resize", () => {

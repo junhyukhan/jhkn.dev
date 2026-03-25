@@ -18,24 +18,31 @@ const { backlinks } = Astro.props;
       <ul class="mt-2 space-y-1">
         {backlinks.map(({ note, context }) => (
           <li class:list={["backlink-item rounded-md px-2 py-1.5 -mx-2 transition-colors duration-150", { "has-context": !!context }]}>
-            <div class="flex items-baseline gap-2 flex-wrap">
-              <a
-                href={`/${note.collection}/${note.slug}/`}
-                class="font-mono text-sm text-blue-600 transition-colors duration-150 shrink-0 inline-flex items-baseline gap-1"
-              >
-                {getNoteTitle(note)}
-                <svg class="backlink-arrow inline w-3 h-3 opacity-40 shrink-0 self-center" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M2 10L10 2M5 2h5v5"/>
+            <div class="flex items-center gap-2">
+              <div class="backlink-toggle flex items-baseline gap-2 flex-wrap min-w-0 flex-1">
+                <a
+                  href={`/${note.collection}/${note.slug}/`}
+                  class="font-mono text-sm text-blue-600 transition-colors duration-150 shrink-0 inline-flex items-baseline gap-1"
+                >
+                  {getNoteTitle(note)}
+                  <svg class="backlink-arrow inline w-3 h-3 opacity-40 shrink-0 self-center" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 10L10 2M5 2h5v5"/>
+                  </svg>
+                </a>
+                {note.data.tags?.length > 0 && (
+                  <span class="flex gap-1 flex-wrap">
+                    {note.data.tags.map((tag: string) => (
+                      <span class="font-mono text-[10px] text-gray-400">
+                        #{tag}
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </div>
+              {context && (
+                <svg class="backlink-chevron backlink-toggle w-3 h-3 shrink-0 text-gray-300 transition-transform duration-200" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 5l3 3 3-3"/>
                 </svg>
-              </a>
-              {note.data.tags?.length > 0 && (
-                <span class="flex gap-1 flex-wrap">
-                  {note.data.tags.map((tag: string) => (
-                    <span class="font-mono text-[10px] text-gray-400">
-                      #{tag}
-                    </span>
-                  ))}
-                </span>
               )}
             </div>
             {context && (
@@ -53,18 +60,21 @@ const { backlinks } = Astro.props;
 
 <script>
   document.querySelectorAll<HTMLLIElement>(".backlink-item.has-context").forEach((item) => {
-    item.addEventListener("click", (e) => {
-      // Let link clicks navigate when context is already open
-      if ((e.target as HTMLElement).closest("a")) {
+    // Toggle context when clicking the title area or chevron
+    item.querySelectorAll<HTMLElement>(".backlink-toggle").forEach((toggle) => {
+      toggle.addEventListener("click", (e) => {
+        // Let link clicks navigate when context is already open
+        if ((e.target as HTMLElement).closest("a")) {
+          const ctx = item.querySelector(".backlink-context");
+          if (ctx?.classList.contains("open")) return; // navigate
+          e.preventDefault(); // first click opens context instead
+        }
         const ctx = item.querySelector(".backlink-context");
-        if (ctx?.classList.contains("open")) return; // navigate
-        e.preventDefault(); // first click opens context instead
-      }
-      const ctx = item.querySelector(".backlink-context");
-      if (ctx) {
-        ctx.classList.toggle("open");
-        item.classList.toggle("active");
-      }
+        if (ctx) {
+          ctx.classList.toggle("open");
+          item.classList.toggle("active");
+        }
+      });
     });
   });
 </script>

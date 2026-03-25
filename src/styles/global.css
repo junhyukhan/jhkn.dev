@@ -136,7 +136,7 @@ a:hover {
 
 /* ── Backlink context snippets ── */
 
-.backlink-item.has-context {
+.backlink-item.has-context .backlink-toggle {
   cursor: pointer;
 }
 
@@ -157,6 +157,11 @@ a:hover {
 /* Restore link appearance once context is open */
 .backlink-item.active a:hover {
   text-decoration: underline;
+}
+
+/* Rotate chevron when context is open */
+.backlink-item.active .backlink-chevron {
+  transform: rotate(180deg);
 }
 
 .backlink-context {

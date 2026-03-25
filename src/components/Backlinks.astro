@@ -1,9 +1,9 @@
 ---
-import type { CollectionEntry } from "astro:content";
+import type { BacklinkWithContext } from "../utils/backlinks";
 import { getNoteTitle } from "../utils/note";
 
 interface Props {
-  backlinks: CollectionEntry<"notes">[];
+  backlinks: BacklinkWithContext[];
 }
 
 const { backlinks } = Astro.props;
@@ -13,20 +13,48 @@ const { backlinks } = Astro.props;
   backlinks.length > 0 && (
     <div>
       <span class="font-mono text-xs text-gray-400 uppercase tracking-widest">
-        Linked from
+        Linked from ({backlinks.length})
       </span>
-      <ul class="mt-2 space-y-1 font-mono text-sm">
-        {backlinks.map((note) => (
-          <li>
-            <a
-              href={`/${note.collection}/${note.slug}/`}
-              class="text-blue-600 hover:underline transition-colors duration-150"
-            >
-              {getNoteTitle(note)}
-            </a>
+      <ul class="mt-2 space-y-1">
+        {backlinks.map(({ note, context }) => (
+          <li class="backlink-item rounded-md px-2 py-1.5 -mx-2 transition-colors duration-150">
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <a
+                href={`/${note.collection}/${note.slug}/`}
+                class="font-mono text-sm text-blue-600 hover:underline transition-colors duration-150 shrink-0"
+              >
+                {getNoteTitle(note)}
+              </a>
+              {note.data.tags?.length > 0 && (
+                <span class="flex gap-1 flex-wrap">
+                  {note.data.tags.map((tag: string) => (
+                    <span class="font-mono text-[10px] text-gray-400">
+                      #{tag}
+                    </span>
+                  ))}
+                </span>
+              )}
+            </div>
+            {context && (
+              <div
+                class="backlink-context font-mono text-xs text-gray-400 italic mt-1 pl-3 border-l-2 border-gray-100"
+                set:html={`"${context}"`}
+              />
+            )}
           </li>
         ))}
       </ul>
     </div>
   )
 }
+
+<script>
+  document.querySelectorAll<HTMLLIElement>(".backlink-item").forEach((item) => {
+    item.addEventListener("click", (e) => {
+      // Let link clicks navigate normally
+      if ((e.target as HTMLElement).closest("a")) return;
+      const ctx = item.querySelector(".backlink-context");
+      if (ctx) ctx.classList.toggle("open");
+    });
+  });
+</script>

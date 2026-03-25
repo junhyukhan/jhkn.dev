@@ -111,6 +111,13 @@ const graphData = buildGraphData(allNotes);
     return Math.min(4 + d.linkCount * 1.5, 16);
   }
 
+  // Non-linear zoom compensation: partially counter-scales visual sizes
+  // so elements stay readable when zoomed out and don't bloat when zoomed in.
+  // Screen-size scales as k^0.35 instead of k^1.
+  function compensate(): number {
+    return 1 / Math.pow(transform.k, 0.65);
+  }
+
   // --- Simulation ---
   const simulation = forceSimulation(nodes as any)
     .force("link", forceLink(links as any).id((d: any) => d.id).distance(80).strength(0.3))
@@ -142,6 +149,7 @@ const graphData = buildGraphData(allNotes);
     ctx.scale(transform.k, transform.k);
 
     const dimmed = hoveredNode !== null;
+    const c = compensate();
 
     // Draw links
     for (const link of links) {
@@ -154,20 +162,20 @@ const graphData = buildGraphData(allNotes);
       ctx.lineTo(t.x!, t.y!);
       if (dimmed && !isHighlighted) {
         ctx.strokeStyle = "rgba(0,0,0,0.04)";
-        ctx.lineWidth = 0.5;
+        ctx.lineWidth = 0.5 * c;
       } else if (isHighlighted) {
         ctx.strokeStyle = GROUP_COLORS[hoveredNode!.group] || DEFAULT_COLOR;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.5 * c;
       } else {
         ctx.strokeStyle = "rgba(0,0,0,0.1)";
-        ctx.lineWidth = 0.8;
+        ctx.lineWidth = 0.8 * c;
       }
       ctx.stroke();
     }
 
     // Draw nodes
     for (const node of nodes) {
-      const r = nodeRadius(node);
+      const r = nodeRadius(node) * c;
       const color = GROUP_COLORS[node.group] || DEFAULT_COLOR;
       const isHovered = hoveredNode === node;
       const isConnected = dimmed && connectedIds!.has(node.id);
@@ -184,19 +192,20 @@ const graphData = buildGraphData(allNotes);
 
       if (isHovered) {
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2 * c;
         ctx.stroke();
       }
 
-      // Draw labels for hubs or hovered/connected nodes
-      const showLabel = node.linkCount >= 5 || isHovered || (dimmed && isConnected);
+      // Show more labels when zoomed in
+      const hubThreshold = transform.k > 1.5 ? 2 : 5;
+      const showLabel = node.linkCount >= hubThreshold || isHovered || (dimmed && isConnected);
       if (showLabel) {
-        const fontSize = Math.max(10, Math.min(12, 9 + node.linkCount * 0.3));
+        const fontSize = Math.max(10, Math.min(12, 9 + node.linkCount * 0.3)) * c;
         ctx.font = `${fontSize}px system-ui, -apple-system, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         ctx.fillStyle = dimmed && !isConnected ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0.7)";
-        ctx.fillText(node.title, node.x!, node.y! + r + 4);
+        ctx.fillText(node.title, node.x!, node.y! + r + 4 * c);
       }
     }
 
@@ -206,9 +215,10 @@ const graphData = buildGraphData(allNotes);
   // --- Find node under cursor ---
   function findNode(mx: number, my: number): SimNode | null {
     const [wx, wy] = toWorld(mx, my);
+    const c = compensate();
     for (let i = nodes.length - 1; i >= 0; i--) {
       const node = nodes[i];
-      const r = nodeRadius(node) + 2;
+      const r = nodeRadius(node) * c + 2;
       const dx = wx - node.x!;
       const dy = wy - node.y!;
       if (dx * dx + dy * dy < r * r) return node;

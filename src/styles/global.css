@@ -140,6 +140,25 @@ a:hover {
   cursor: pointer;
 }
 
+/* Override prose underline on backlink titles — first click opens context, not navigates */
+.backlink-item.has-context a {
+  text-decoration: none;
+}
+
+/* Only show the link arrow when context is open (clicking now navigates) */
+.backlink-item .backlink-arrow {
+  display: none;
+}
+
+.backlink-item.active .backlink-arrow {
+  display: inline;
+}
+
+/* Restore link appearance once context is open */
+.backlink-item.active a:hover {
+  text-decoration: underline;
+}
+
 .backlink-context {
   max-height: 0;
   overflow: hidden;

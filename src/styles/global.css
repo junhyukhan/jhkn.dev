@@ -136,7 +136,8 @@ a:hover {
 
 /* ── Backlink context snippets ── */
 
-.backlink-item.has-context .backlink-toggle {
+.backlink-item.has-context a,
+.backlink-item.has-context .backlink-chevron {
   cursor: pointer;
 }
 

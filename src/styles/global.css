@@ -147,12 +147,11 @@ a:hover {
   transition: max-height 0.2s ease, opacity 0.2s ease;
 }
 
-.backlink-item:hover .backlink-context,
 .backlink-context.open {
   max-height: 6rem;
   opacity: 1;
 }
 
-.backlink-item:hover {
+.backlink-item.active {
   background-color: theme("colors.gray.50");
 }

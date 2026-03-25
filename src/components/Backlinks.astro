@@ -51,10 +51,17 @@ const { backlinks } = Astro.props;
 <script>
   document.querySelectorAll<HTMLLIElement>(".backlink-item").forEach((item) => {
     item.addEventListener("click", (e) => {
-      // Let link clicks navigate normally
-      if ((e.target as HTMLElement).closest("a")) return;
+      // Let link clicks navigate when context is already open
+      if ((e.target as HTMLElement).closest("a")) {
+        const ctx = item.querySelector(".backlink-context");
+        if (ctx?.classList.contains("open")) return; // navigate
+        e.preventDefault(); // first click opens context instead
+      }
       const ctx = item.querySelector(".backlink-context");
-      if (ctx) ctx.classList.toggle("open");
+      if (ctx) {
+        ctx.classList.toggle("open");
+        item.classList.toggle("active");
+      }
     });
   });
 </script>

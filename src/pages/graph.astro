@@ -110,7 +110,7 @@ const graphData = buildGraphData(allNotes);
   const links: SimLink[] = graphData.links.map((l: any) => ({ ...l }));
 
   function nodeRadius(d: SimNode): number {
-    return Math.min(4 + d.linkCount * 1.5, 16);
+    return Math.min(8 + d.linkCount * 2, 24);
   }
 
   // Non-linear zoom compensation: partially counter-scales visual sizes
@@ -122,8 +122,8 @@ const graphData = buildGraphData(allNotes);
 
   // --- Simulation ---
   const simulation = forceSimulation(nodes as any)
-    .force("link", forceLink(links as any).id((d: any) => d.id).distance(80).strength(0.3))
-    .force("charge", forceManyBody().strength(-180))
+    .force("link", forceLink(links as any).id((d: any) => d.id).distance(100).strength(0.3))
+    .force("charge", forceManyBody().strength(-250))
     .force("center", forceCenter(width / 2, height / 2))
     .force("collide", forceCollide().radius((d: any) => nodeRadius(d) + 3))
     .on("tick", draw);
@@ -164,13 +164,13 @@ const graphData = buildGraphData(allNotes);
       ctx.lineTo(t.x!, t.y!);
       if (dimmed && !isHighlighted) {
         ctx.strokeStyle = "rgba(0,0,0,0.04)";
-        ctx.lineWidth = 0.5 * c;
+        ctx.lineWidth = 1 * c;
       } else if (isHighlighted) {
         ctx.strokeStyle = GROUP_COLORS[hoveredNode!.group] || DEFAULT_COLOR;
-        ctx.lineWidth = 1.5 * c;
+        ctx.lineWidth = 2.5 * c;
       } else {
-        ctx.strokeStyle = "rgba(0,0,0,0.1)";
-        ctx.lineWidth = 0.8 * c;
+        ctx.strokeStyle = "rgba(0,0,0,0.15)";
+        ctx.lineWidth = 1.5 * c;
       }
       ctx.stroke();
     }

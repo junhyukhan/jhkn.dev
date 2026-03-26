@@ -175,7 +175,7 @@ const graphData = buildGraphData(allNotes);
       ctx.stroke();
     }
 
-    // Draw nodes — ring style with translucent fill
+    // Draw nodes
     for (const node of nodes) {
       const r = nodeRadius(node) * c;
       const color = GROUP_COLORS[node.group] || DEFAULT_COLOR;
@@ -183,37 +183,23 @@ const graphData = buildGraphData(allNotes);
       const isConnected = dimmed && connectedIds!.has(node.id);
       const drawR = isHovered ? r * 1.2 : r;
 
-      // Translucent fill
       ctx.beginPath();
       ctx.arc(node.x!, node.y!, drawR, 0, Math.PI * 2);
+
       if (dimmed && !isConnected) {
-        ctx.fillStyle = color + "08";
+        ctx.fillStyle = color + "18";
       } else {
-        ctx.fillStyle = color + "20";
+        ctx.fillStyle = color;
+        ctx.globalAlpha = isHovered ? 1 : 0.85;
       }
       ctx.fill();
+      ctx.globalAlpha = 1;
 
-      // Ring stroke
-      ctx.beginPath();
-      ctx.arc(node.x!, node.y!, drawR, 0, Math.PI * 2);
-      if (dimmed && !isConnected) {
-        ctx.strokeStyle = color + "30";
-        ctx.lineWidth = 1 * c;
-      } else if (isHovered) {
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2.5 * c;
-      } else {
-        ctx.strokeStyle = color + "90";
-        ctx.lineWidth = 1.5 * c;
+      if (isHovered) {
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2 * c;
+        ctx.stroke();
       }
-      ctx.stroke();
-
-      // Small solid center dot
-      const dotR = Math.max(2, drawR * 0.3) * (dimmed && !isConnected ? 0.5 : 1);
-      ctx.beginPath();
-      ctx.arc(node.x!, node.y!, dotR, 0, Math.PI * 2);
-      ctx.fillStyle = dimmed && !isConnected ? color + "30" : color;
-      ctx.fill();
 
       // Show more labels when zoomed in
       const hubThreshold = transform.k > 1.5 ? 2 : 5;

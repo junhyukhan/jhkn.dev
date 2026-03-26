@@ -114,10 +114,10 @@ const graphData = buildGraphData(allNotes);
   }
 
   // Non-linear zoom compensation: partially counter-scales visual sizes
-  // so elements stay readable when zoomed out and don't bloat when zoomed in.
-  // Screen-size scales as k^0.2 instead of k^1.
+  // so elements stay readable when zoomed out but still shrink noticeably.
+  // Screen-size scales as k^0.6 instead of k^1.
   function compensate(): number {
-    return 1 / Math.pow(transform.k, 0.8);
+    return 1 / Math.pow(transform.k, 0.4);
   }
 
   // --- Simulation ---
@@ -175,28 +175,45 @@ const graphData = buildGraphData(allNotes);
       ctx.stroke();
     }
 
-    // Draw nodes
+    // Draw nodes — ring style with translucent fill
     for (const node of nodes) {
       const r = nodeRadius(node) * c;
       const color = GROUP_COLORS[node.group] || DEFAULT_COLOR;
       const isHovered = hoveredNode === node;
       const isConnected = dimmed && connectedIds!.has(node.id);
+      const drawR = isHovered ? r * 1.2 : r;
 
+      // Translucent fill
       ctx.beginPath();
-      ctx.arc(node.x!, node.y!, isHovered ? r * 1.3 : r, 0, Math.PI * 2);
-
+      ctx.arc(node.x!, node.y!, drawR, 0, Math.PI * 2);
       if (dimmed && !isConnected) {
-        ctx.fillStyle = color + "20";
+        ctx.fillStyle = color + "08";
       } else {
-        ctx.fillStyle = color;
+        ctx.fillStyle = color + "20";
       }
       ctx.fill();
 
-      if (isHovered) {
+      // Ring stroke
+      ctx.beginPath();
+      ctx.arc(node.x!, node.y!, drawR, 0, Math.PI * 2);
+      if (dimmed && !isConnected) {
+        ctx.strokeStyle = color + "30";
+        ctx.lineWidth = 1 * c;
+      } else if (isHovered) {
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2 * c;
-        ctx.stroke();
+        ctx.lineWidth = 2.5 * c;
+      } else {
+        ctx.strokeStyle = color + "90";
+        ctx.lineWidth = 1.5 * c;
       }
+      ctx.stroke();
+
+      // Small solid center dot
+      const dotR = Math.max(2, drawR * 0.3) * (dimmed && !isConnected ? 0.5 : 1);
+      ctx.beginPath();
+      ctx.arc(node.x!, node.y!, dotR, 0, Math.PI * 2);
+      ctx.fillStyle = dimmed && !isConnected ? color + "30" : color;
+      ctx.fill();
 
       // Show more labels when zoomed in
       const hubThreshold = transform.k > 1.5 ? 2 : 5;

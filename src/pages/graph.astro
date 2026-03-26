@@ -110,14 +110,14 @@ const graphData = buildGraphData(allNotes);
   const links: SimLink[] = graphData.links.map((l: any) => ({ ...l }));
 
   function nodeRadius(d: SimNode): number {
-    return Math.min(8 + d.linkCount * 2, 24);
+    return Math.min(10 + d.linkCount * 2.5, 28);
   }
 
   // Non-linear zoom compensation: partially counter-scales visual sizes
   // so elements stay readable when zoomed out and don't bloat when zoomed in.
-  // Screen-size scales as k^0.35 instead of k^1.
+  // Screen-size scales as k^0.2 instead of k^1.
   function compensate(): number {
-    return 1 / Math.pow(transform.k, 0.65);
+    return 1 / Math.pow(transform.k, 0.8);
   }
 
   // --- Simulation ---
@@ -357,7 +357,7 @@ const graphData = buildGraphData(allNotes);
     const my = e.clientY - rect.top;
 
     const factor = e.deltaY < 0 ? 1.1 : 0.9;
-    const newK = Math.max(0.2, Math.min(5, transform.k * factor));
+    const newK = Math.max(0.05, Math.min(5, transform.k * factor));
     const ratio = newK / transform.k;
 
     transform.x = mx - ratio * (mx - transform.x);
@@ -441,7 +441,7 @@ const graphData = buildGraphData(allNotes);
     if (e.touches.length === 2 && pinchStart) {
       const newDist = pinchDist(e);
       const ratio = newDist / pinchStart.dist;
-      const newK = Math.max(0.2, Math.min(5, pinchStart.k * ratio));
+      const newK = Math.max(0.05, Math.min(5, pinchStart.k * ratio));
       const scaleRatio = newK / transform.k;
 
       transform.x = pinchStart.mx - scaleRatio * (pinchStart.mx - transform.x);

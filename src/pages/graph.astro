@@ -33,7 +33,7 @@ const graphData = buildGraphData(allNotes);
 
     <div id="graph-container" class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50"
       style="height: 70vh;">
-      <canvas id="graph-canvas"></canvas>
+      <canvas id="graph-canvas" style="touch-action: none;"></canvas>
     </div>
   </div>
 </BaseLayout>
@@ -51,6 +51,10 @@ const graphData = buildGraphData(allNotes);
     quotes: "#22c55e",
   };
   const DEFAULT_COLOR = "#94a3b8";
+
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
 
   // --- Canvas setup ---
   const container = document.getElementById("graph-container")!;
@@ -76,9 +80,6 @@ const graphData = buildGraphData(allNotes);
   // --- Transform state (zoom + pan) ---
   let transform = { x: 0, y: 0, k: 1 };
 
-  function toScreen(px: number, py: number): [number, number] {
-    return [px * transform.k + transform.x, py * transform.k + transform.y];
-  }
   function toWorld(sx: number, sy: number): [number, number] {
     return [(sx - transform.x) / transform.k, (sy - transform.y) / transform.k];
   }
@@ -226,8 +227,27 @@ const graphData = buildGraphData(allNotes);
     return null;
   }
 
+  // --- Shared tooltip logic ---
+  function showTooltip(node: SimNode, screenX: number, screenY: number) {
+    const tags = node.tags.length ? node.tags.map(escapeHtml).join(", ") : "none";
+    tooltip.innerHTML = `
+      <a href="/notes/${node.slug}/" class="font-medium text-gray-900 hover:underline">${escapeHtml(node.title)}</a>
+      <div class="text-gray-400 text-xs font-mono mt-1">${node.linkCount} connections · ${escapeHtml(node.group)}</div>
+      <div class="text-gray-400 text-xs font-mono">tags: ${tags}</div>
+    `;
+    tooltip.classList.remove("hidden");
+    tooltip.style.left = (screenX + 12) + "px";
+    tooltip.style.top = (screenY - 10) + "px";
+  }
+
+  function hideTooltip() {
+    tooltip.classList.add("hidden");
+    hoveredNode = null;
+    connectedIds = null;
+    draw();
+  }
+
   // --- Mouse interaction ---
-  let isDragging = false;
   let dragNode: SimNode | null = null;
   let panStart: { x: number; y: number; tx: number; ty: number } | null = null;
 
@@ -258,17 +278,8 @@ const graphData = buildGraphData(allNotes);
       canvas.style.cursor = node ? "pointer" : "grab";
 
       if (node) {
-        const tags = node.tags.length ? node.tags.join(", ") : "none";
-        tooltip.innerHTML = `
-          <a href="/notes/${node.slug}/" class="font-medium text-gray-900 hover:underline">${node.title}</a>
-          <div class="text-gray-400 text-xs font-mono mt-1">${node.linkCount} connections · ${node.group}</div>
-          <div class="text-gray-400 text-xs font-mono">tags: ${tags}</div>
-        `;
-        tooltip.classList.remove("hidden");
-        tooltip.style.left = (mx + 12) + "px";
-        tooltip.style.top = (my - 10) + "px";
+        showTooltip(node, mx, my);
       } else {
-        // Only hide if mouse isn't over the tooltip itself
         if (!tooltip.matches(":hover")) {
           tooltip.classList.add("hidden");
         }
@@ -287,7 +298,6 @@ const graphData = buildGraphData(allNotes);
     const node = findNode(mx, my);
 
     if (node) {
-      isDragging = true;
       dragNode = node;
       const [wx, wy] = toWorld(mx, my);
       node.fx = wx;
@@ -306,7 +316,6 @@ const graphData = buildGraphData(allNotes);
       simulation.alphaTarget(0);
     }
     dragNode = null;
-    isDragging = false;
     panStart = null;
     canvas.style.cursor = hoveredNode ? "pointer" : "grab";
   });
@@ -329,14 +338,146 @@ const graphData = buildGraphData(allNotes);
     draw();
   }, { passive: false });
 
-  // --- Hide tooltip when mouse leaves it ---
-  tooltip.addEventListener("mouseleave", () => {
-    tooltip.classList.add("hidden");
-    hoveredNode = null;
-    connectedIds = null;
-    canvas.style.cursor = "grab";
-    draw();
+  // --- Hide tooltip when mouse leaves canvas or tooltip ---
+  canvas.addEventListener("mouseleave", () => {
+    if (!tooltip.matches(":hover")) hideTooltip();
   });
+
+  tooltip.addEventListener("mouseleave", () => {
+    canvas.style.cursor = "grab";
+    hideTooltip();
+  });
+
+  // --- Touch interaction ---
+  let touchDragNode: SimNode | null = null;
+  let touchPanStart: { x: number; y: number; tx: number; ty: number } | null = null;
+  let pinchStart: { dist: number; k: number; mx: number; my: number } | null = null;
+  let touchStartPos: { x: number; y: number } | null = null;
+
+  function getTouchPos(e: TouchEvent, index = 0): { x: number; y: number } {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: e.touches[index].clientX - rect.left,
+      y: e.touches[index].clientY - rect.top,
+    };
+  }
+
+  function pinchDist(e: TouchEvent): number {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function pinchMid(e: TouchEvent): { x: number; y: number } {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left,
+      y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top,
+    };
+  }
+
+  canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+
+    if (e.touches.length === 2) {
+      // Start pinch zoom
+      touchDragNode = null;
+      touchPanStart = null;
+      const mid = pinchMid(e);
+      pinchStart = { dist: pinchDist(e), k: transform.k, mx: mid.x, my: mid.y };
+      return;
+    }
+
+    if (e.touches.length === 1) {
+      pinchStart = null;
+      const pos = getTouchPos(e);
+      touchStartPos = { x: pos.x, y: pos.y };
+      const node = findNode(pos.x, pos.y);
+
+      if (node) {
+        touchDragNode = node;
+        const [wx, wy] = toWorld(pos.x, pos.y);
+        node.fx = wx;
+        node.fy = wy;
+        simulation.alphaTarget(0.3).restart();
+      } else {
+        touchPanStart = { x: pos.x, y: pos.y, tx: transform.x, ty: transform.y };
+      }
+    }
+  }, { passive: false });
+
+  canvas.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+
+    if (e.touches.length === 2 && pinchStart) {
+      const newDist = pinchDist(e);
+      const ratio = newDist / pinchStart.dist;
+      const newK = Math.max(0.2, Math.min(5, pinchStart.k * ratio));
+      const scaleRatio = newK / transform.k;
+
+      transform.x = pinchStart.mx - scaleRatio * (pinchStart.mx - transform.x);
+      transform.y = pinchStart.my - scaleRatio * (pinchStart.my - transform.y);
+      transform.k = newK;
+      draw();
+      return;
+    }
+
+    if (e.touches.length === 1) {
+      const pos = getTouchPos(e);
+
+      if (touchDragNode) {
+        const [wx, wy] = toWorld(pos.x, pos.y);
+        touchDragNode.fx = wx;
+        touchDragNode.fy = wy;
+        simulation.alpha(0.3).restart();
+        touchStartPos = null; // moved — not a tap
+      } else if (touchPanStart) {
+        transform.x = touchPanStart.tx + (pos.x - touchPanStart.x);
+        transform.y = touchPanStart.ty + (pos.y - touchPanStart.y);
+        draw();
+        touchStartPos = null; // moved — not a tap
+      }
+    }
+  }, { passive: false });
+
+  canvas.addEventListener("touchend", (e) => {
+    e.preventDefault();
+
+    // Handle tap (no significant movement)
+    if (touchStartPos && e.changedTouches.length === 1) {
+      const rect = canvas.getBoundingClientRect();
+      const endX = e.changedTouches[0].clientX - rect.left;
+      const endY = e.changedTouches[0].clientY - rect.top;
+      const dx = endX - touchStartPos.x;
+      const dy = endY - touchStartPos.y;
+
+      if (dx * dx + dy * dy < 100) { // < 10px movement
+        const node = findNode(endX, endY);
+        if (node) {
+          hoveredNode = node;
+          connectedIds = getConnected(node);
+          showTooltip(node, endX, endY);
+          draw();
+        } else {
+          hideTooltip();
+        }
+      }
+    }
+
+    if (touchDragNode) {
+      touchDragNode.fx = null;
+      touchDragNode.fy = null;
+      simulation.alphaTarget(0);
+      touchDragNode = null;
+    }
+
+    touchPanStart = null;
+    touchStartPos = null;
+
+    if (e.touches.length < 2) {
+      pinchStart = null;
+    }
+  }, { passive: false });
 
   // --- Resize ---
   window.addEventListener("resize", () => {

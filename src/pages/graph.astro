@@ -28,7 +28,8 @@ const graphData = buildGraphData(allNotes);
     </div>
 
     <div id="graph-tooltip"
-      class="hidden absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-sm max-w-xs">
+      class="hidden absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-sm"
+      style="width: 200px;">
     </div>
 
     <div id="graph-container" class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50"
@@ -216,8 +217,7 @@ const graphData = buildGraphData(allNotes);
     if (hoveredNode && !tooltip.classList.contains("hidden")) {
       const sx = hoveredNode.x! * transform.k + transform.x;
       const sy = hoveredNode.y! * transform.k + transform.y;
-      tooltip.style.left = (sx + 12) + "px";
-      tooltip.style.top = (sy - 10) + "px";
+      positionTooltip(sx, sy);
     }
   }
 
@@ -236,6 +236,29 @@ const graphData = buildGraphData(allNotes);
   }
 
   // --- Shared tooltip logic ---
+  const TOOLTIP_W = 200;
+  const TOOLTIP_GAP = 12;
+
+  function positionTooltip(sx: number, sy: number) {
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    const th = tooltip.offsetHeight || 80;
+
+    // Flip horizontally if it would overflow right
+    let left = sx + TOOLTIP_GAP;
+    if (left + TOOLTIP_W > cw) {
+      left = sx - TOOLTIP_GAP - TOOLTIP_W;
+    }
+    left = Math.max(4, Math.min(left, cw - TOOLTIP_W - 4));
+
+    // Clamp vertically
+    let top = sy - 10;
+    top = Math.max(4, Math.min(top, ch - th - 4));
+
+    tooltip.style.left = left + "px";
+    tooltip.style.top = top + "px";
+  }
+
   function showTooltip(node: SimNode, screenX: number, screenY: number) {
     const tags = node.tags.length ? node.tags.map(escapeHtml).join(", ") : "none";
     tooltip.innerHTML = `
@@ -244,8 +267,7 @@ const graphData = buildGraphData(allNotes);
       <div class="text-gray-400 text-xs font-mono">tags: ${tags}</div>
     `;
     tooltip.classList.remove("hidden");
-    tooltip.style.left = (screenX + 12) + "px";
-    tooltip.style.top = (screenY - 10) + "px";
+    positionTooltip(screenX, screenY);
   }
 
   function hideTooltip() {
@@ -294,8 +316,7 @@ const graphData = buildGraphData(allNotes);
       }
       draw();
     } else if (node) {
-      tooltip.style.left = (mx + 12) + "px";
-      tooltip.style.top = (my - 10) + "px";
+      positionTooltip(mx, my);
     }
   });
 

@@ -239,17 +239,29 @@ const graphData = buildGraphData(allNotes);
   }
 
   // --- Find node under cursor ---
+  // Ensures a minimum 20px screen-space hit target, and when zoomed out
+  // snaps to the closest node within range (not just the first hit).
   function findNode(mx: number, my: number): SimNode | null {
     const [wx, wy] = toWorld(mx, my);
     const c = compensate();
-    for (let i = nodes.length - 1; i >= 0; i--) {
-      const node = nodes[i];
-      const r = nodeRadius(node) * c + 2;
+    // Minimum hit radius in world-space: at least 20 screen-px
+    const minHitR = 20 / transform.k;
+
+    let closest: SimNode | null = null;
+    let closestDist = Infinity;
+
+    for (const node of nodes) {
+      const visualR = nodeRadius(node) * c;
+      const hitR = Math.max(visualR, minHitR);
       const dx = wx - node.x!;
       const dy = wy - node.y!;
-      if (dx * dx + dy * dy < r * r) return node;
+      const dist = dx * dx + dy * dy;
+      if (dist < hitR * hitR && dist < closestDist) {
+        closest = node;
+        closestDist = dist;
+      }
     }
-    return null;
+    return closest;
   }
 
   // --- Shared tooltip logic ---

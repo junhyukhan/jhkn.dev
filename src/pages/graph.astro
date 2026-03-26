@@ -211,6 +211,14 @@ const graphData = buildGraphData(allNotes);
     }
 
     ctx.restore();
+
+    // Keep tooltip anchored to the hovered node's screen position
+    if (hoveredNode && !tooltip.classList.contains("hidden")) {
+      const sx = hoveredNode.x! * transform.k + transform.x;
+      const sy = hoveredNode.y! * transform.k + transform.y;
+      tooltip.style.left = (sx + 12) + "px";
+      tooltip.style.top = (sy - 10) + "px";
+    }
   }
 
   // --- Find node under cursor ---

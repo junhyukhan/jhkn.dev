@@ -42,7 +42,7 @@ const graphData = buildGraphData(allNotes);
 <script type="application/json" id="graph-data" set:html={JSON.stringify(graphData)} />
 
 <script>
-  import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } from "d3-force";
+  import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide, forceX, forceY } from "d3-force";
 
   const graphData = JSON.parse(document.getElementById("graph-data")!.textContent!);
 
@@ -125,6 +125,8 @@ const graphData = buildGraphData(allNotes);
     .force("link", forceLink(links as any).id((d: any) => d.id).distance(100).strength(0.3))
     .force("charge", forceManyBody().strength(-250))
     .force("center", forceCenter(width / 2, height / 2))
+    .force("gravityX", forceX(width / 2).strength(0.03))
+    .force("gravityY", forceY(height / 2).strength(0.03))
     .force("collide", forceCollide().radius((d: any) => nodeRadius(d) + 3))
     .on("tick", draw);
 
@@ -305,7 +307,7 @@ const graphData = buildGraphData(allNotes);
       const [wx, wy] = toWorld(mx, my);
       dragNode.fx = wx;
       dragNode.fy = wy;
-      simulation.alpha(0.3).restart();
+      simulation.alpha(0.1).restart();
       return;
     }
 
@@ -346,7 +348,7 @@ const graphData = buildGraphData(allNotes);
       const [wx, wy] = toWorld(mx, my);
       node.fx = wx;
       node.fy = wy;
-      simulation.alphaTarget(0.3).restart();
+      simulation.alphaTarget(0.1).restart();
     } else {
       panStart = { x: mx, y: my, tx: transform.x, ty: transform.y };
       canvas.style.cursor = "grabbing";
@@ -443,7 +445,7 @@ const graphData = buildGraphData(allNotes);
         const [wx, wy] = toWorld(pos.x, pos.y);
         node.fx = wx;
         node.fy = wy;
-        simulation.alphaTarget(0.3).restart();
+        simulation.alphaTarget(0.1).restart();
       } else {
         touchPanStart = { x: pos.x, y: pos.y, tx: transform.x, ty: transform.y };
       }
@@ -473,7 +475,7 @@ const graphData = buildGraphData(allNotes);
         const [wx, wy] = toWorld(pos.x, pos.y);
         touchDragNode.fx = wx;
         touchDragNode.fy = wy;
-        simulation.alpha(0.3).restart();
+        simulation.alpha(0.1).restart();
         touchStartPos = null; // moved — not a tap
       } else if (touchPanStart) {
         transform.x = touchPanStart.tx + (pos.x - touchPanStart.x);
@@ -527,6 +529,8 @@ const graphData = buildGraphData(allNotes);
   window.addEventListener("resize", () => {
     resizeCanvas();
     simulation.force("center", forceCenter(width / 2, height / 2));
+    simulation.force("gravityX", forceX(width / 2).strength(0.03));
+    simulation.force("gravityY", forceY(height / 2).strength(0.03));
     simulation.alpha(0.3).restart();
   });
 

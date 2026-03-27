@@ -5,6 +5,15 @@ import { buildGraphData } from "../utils/graph";
 
 const allNotes = await getCollection("notes");
 const graphData = buildGraphData(allNotes);
+
+const GROUP_COLORS: Record<string, string> = {
+  general: "#3b82f6",
+  leetcode: "#f59e0b",
+  quotes: "#22c55e",
+};
+const DEFAULT_COLOR = "#94a3b8";
+
+const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
 ---
 
 <BaseLayout pageTitle="Graph" wide={true}>
@@ -12,18 +21,12 @@ const graphData = buildGraphData(allNotes);
     <div class="flex items-baseline justify-between mb-4">
       <h1 class="text-2xl font-bold tracking-tight">Graph</h1>
       <div id="graph-legend" class="flex gap-4 font-mono text-xs text-gray-400">
-        <span class="flex items-center gap-1">
-          <span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#3b82f6"></span>
-          General
-        </span>
-        <span class="flex items-center gap-1">
-          <span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#f59e0b"></span>
-          LeetCode
-        </span>
-        <span class="flex items-center gap-1">
-          <span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#22c55e"></span>
-          Quotes
-        </span>
+        {groups.map((group) => (
+          <span class="flex items-center gap-1">
+            <span class="inline-block w-2.5 h-2.5 rounded-full" style={`background:${GROUP_COLORS[group] || DEFAULT_COLOR}`}></span>
+            {group.charAt(0).toUpperCase() + group.slice(1)}
+          </span>
+        ))}
       </div>
     </div>
 
@@ -115,7 +118,6 @@ const graphData = buildGraphData(allNotes);
 
   // Non-linear zoom compensation: partially counter-scales visual sizes
   // so elements stay readable when zoomed out but still shrink noticeably.
-  // Screen-size scales as k^0.6 instead of k^1.
   function compensate(): number {
     return 1 / Math.pow(transform.k, 0.4);
   }
@@ -208,7 +210,7 @@ const graphData = buildGraphData(allNotes);
       const showLabel = node.linkCount >= hubThreshold || isHovered || (dimmed && isConnected);
       if (showLabel) {
         const fontSize = Math.max(10, Math.min(12, 9 + node.linkCount * 0.3)) * c;
-        ctx.font = `${fontSize}px system-ui, -apple-system, sans-serif`;
+        ctx.font = `${fontSize}px system-ui, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         ctx.fillStyle = dimmed && !isConnected ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0.7)";
@@ -227,12 +229,9 @@ const graphData = buildGraphData(allNotes);
   }
 
   // --- Find node under cursor ---
-  // Ensures a minimum 20px screen-space hit target, and when zoomed out
-  // snaps to the closest node within range (not just the first hit).
   function findNode(mx: number, my: number): SimNode | null {
     const [wx, wy] = toWorld(mx, my);
     const c = compensate();
-    // Minimum hit radius in world-space: at least 20 screen-px
     const minHitR = 20 / transform.k;
 
     let closest: SimNode | null = null;
@@ -252,7 +251,7 @@ const graphData = buildGraphData(allNotes);
     return closest;
   }
 
-  // --- Shared tooltip logic ---
+  // --- Tooltip ---
   const TOOLTIP_W = 200;
   const TOOLTIP_GAP = 12;
 
@@ -261,14 +260,12 @@ const graphData = buildGraphData(allNotes);
     const ch = container.clientHeight;
     const th = tooltip.offsetHeight || 80;
 
-    // Flip horizontally if it would overflow right
     let left = sx + TOOLTIP_GAP;
     if (left + TOOLTIP_W > cw) {
       left = sx - TOOLTIP_GAP - TOOLTIP_W;
     }
     left = Math.max(4, Math.min(left, cw - TOOLTIP_W - 4));
 
-    // Clamp vertically
     let top = sy - 10;
     top = Math.max(4, Math.min(top, ch - th - 4));
 
@@ -279,7 +276,7 @@ const graphData = buildGraphData(allNotes);
   function showTooltip(node: SimNode, screenX: number, screenY: number) {
     const tags = node.tags.length ? node.tags.map(escapeHtml).join(", ") : "none";
     tooltip.innerHTML = `
-      <a href="/notes/${node.slug}/" class="font-medium text-gray-900 hover:underline">${escapeHtml(node.title)}</a>
+      <a href="/notes/${encodeURI(node.slug)}/" class="font-medium text-gray-900 hover:underline">${escapeHtml(node.title)}</a>
       <div class="text-gray-400 text-xs font-mono mt-1">${node.linkCount} connections · ${escapeHtml(node.group)}</div>
       <div class="text-gray-400 text-xs font-mono">tags: ${tags}</div>
     `;
@@ -294,79 +291,183 @@ const graphData = buildGraphData(allNotes);
     draw();
   }
 
-  // --- Mouse interaction ---
+  // --- Unified pointer interaction ---
+  const activePointers = new Map<number, { x: number; y: number }>();
   let dragNode: SimNode | null = null;
   let panStart: { x: number; y: number; tx: number; ty: number } | null = null;
+  let pinchStartDist: number | null = null;
+  let pinchStartK: number | null = null;
+  let tapStart: { x: number; y: number } | null = null;
 
-  canvas.addEventListener("mousemove", (e) => {
+  function getPointerPos(e: PointerEvent): { x: number; y: number } {
     const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
 
-    if (dragNode) {
-      const [wx, wy] = toWorld(mx, my);
-      dragNode.fx = wx;
-      dragNode.fy = wy;
-      simulation.alpha(0.1).restart();
+  function getPointerDist(): number {
+    const pts = [...activePointers.values()];
+    const dx = pts[0].x - pts[1].x;
+    const dy = pts[0].y - pts[1].y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function getPointerMid(): { x: number; y: number } {
+    const pts = [...activePointers.values()];
+    return { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+  }
+
+  canvas.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    canvas.setPointerCapture(e.pointerId);
+    const pos = getPointerPos(e);
+    activePointers.set(e.pointerId, pos);
+
+    if (activePointers.size === 2) {
+      // Start pinch — cancel any single-pointer action
+      dragNode = null;
+      panStart = null;
+      tapStart = null;
+      pinchStartDist = getPointerDist();
+      pinchStartK = transform.k;
       return;
     }
 
-    if (panStart) {
-      transform.x = panStart.tx + (mx - panStart.x);
-      transform.y = panStart.ty + (my - panStart.y);
-      draw();
-      return;
-    }
-
-    const node = findNode(mx, my);
-    if (node !== hoveredNode) {
-      hoveredNode = node;
-      connectedIds = node ? getConnected(node) : null;
-      canvas.style.cursor = node ? "pointer" : "grab";
+    if (activePointers.size === 1) {
+      tapStart = { x: pos.x, y: pos.y };
+      const node = findNode(pos.x, pos.y);
 
       if (node) {
-        showTooltip(node, mx, my);
+        dragNode = node;
+        const [wx, wy] = toWorld(pos.x, pos.y);
+        node.fx = wx;
+        node.fy = wy;
+        simulation.alphaTarget(0.1).restart();
       } else {
-        if (!tooltip.matches(":hover")) {
-          tooltip.classList.add("hidden");
+        panStart = { x: pos.x, y: pos.y, tx: transform.x, ty: transform.y };
+        canvas.style.cursor = "grabbing";
+      }
+    }
+  });
+
+  canvas.addEventListener("pointermove", (e) => {
+    e.preventDefault();
+    const pos = getPointerPos(e);
+    activePointers.set(e.pointerId, pos);
+
+    // Pinch zoom with 2 pointers
+    if (activePointers.size === 2 && pinchStartDist !== null && pinchStartK !== null) {
+      const newDist = getPointerDist();
+      const mid = getPointerMid();
+      const ratio = newDist / pinchStartDist;
+      const newK = Math.max(0.05, Math.min(5, pinchStartK * ratio));
+      const scaleRatio = newK / transform.k;
+
+      transform.x = mid.x - scaleRatio * (mid.x - transform.x);
+      transform.y = mid.y - scaleRatio * (mid.y - transform.y);
+      transform.k = newK;
+      draw();
+      return;
+    }
+
+    // Single pointer
+    if (activePointers.size === 1) {
+      if (dragNode) {
+        const [wx, wy] = toWorld(pos.x, pos.y);
+        dragNode.fx = wx;
+        dragNode.fy = wy;
+        simulation.alpha(0.1).restart();
+        tapStart = null;
+        return;
+      }
+
+      if (panStart) {
+        transform.x = panStart.tx + (pos.x - panStart.x);
+        transform.y = panStart.ty + (pos.y - panStart.y);
+        draw();
+        tapStart = null;
+        return;
+      }
+
+      // Hover (mouse only — no active drag/pan means pointer is just moving)
+      const node = findNode(pos.x, pos.y);
+      if (node !== hoveredNode) {
+        hoveredNode = node;
+        connectedIds = node ? getConnected(node) : null;
+        canvas.style.cursor = node ? "pointer" : "grab";
+
+        if (node) {
+          showTooltip(node, pos.x, pos.y);
+        } else {
+          if (!tooltip.matches(":hover")) {
+            tooltip.classList.add("hidden");
+          }
+        }
+        draw();
+      } else if (node) {
+        positionTooltip(pos.x, pos.y);
+      }
+    }
+  });
+
+  canvas.addEventListener("pointerup", (e) => {
+    e.preventDefault();
+    const pos = getPointerPos(e);
+
+    // Handle tap (no significant movement)
+    if (tapStart && activePointers.size === 1) {
+      const dx = pos.x - tapStart.x;
+      const dy = pos.y - tapStart.y;
+      if (dx * dx + dy * dy < 100) {
+        const node = findNode(pos.x, pos.y);
+        if (node) {
+          hoveredNode = node;
+          connectedIds = getConnected(node);
+          showTooltip(node, pos.x, pos.y);
+          draw();
+        } else {
+          hideTooltip();
         }
       }
-      draw();
-    } else if (node) {
-      positionTooltip(mx, my);
     }
-  });
 
-  canvas.addEventListener("mousedown", (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    const node = findNode(mx, my);
-
-    if (node) {
-      dragNode = node;
-      const [wx, wy] = toWorld(mx, my);
-      node.fx = wx;
-      node.fy = wy;
-      simulation.alphaTarget(0.1).restart();
-    } else {
-      panStart = { x: mx, y: my, tx: transform.x, ty: transform.y };
-      canvas.style.cursor = "grabbing";
-    }
-  });
-
-  canvas.addEventListener("mouseup", () => {
     if (dragNode) {
       dragNode.fx = null;
       dragNode.fy = null;
       simulation.alphaTarget(0);
+      dragNode = null;
     }
-    dragNode = null;
+
     panStart = null;
-    canvas.style.cursor = hoveredNode ? "pointer" : "grab";
+    tapStart = null;
+    activePointers.delete(e.pointerId);
+
+    if (activePointers.size < 2) {
+      pinchStartDist = null;
+      pinchStartK = null;
+    }
+
+    if (activePointers.size === 0) {
+      canvas.style.cursor = hoveredNode ? "pointer" : "grab";
+    }
   });
 
-  // --- Zoom ---
+  canvas.addEventListener("pointercancel", (e) => {
+    activePointers.delete(e.pointerId);
+    if (dragNode) {
+      dragNode.fx = null;
+      dragNode.fy = null;
+      simulation.alphaTarget(0);
+      dragNode = null;
+    }
+    panStart = null;
+    tapStart = null;
+    if (activePointers.size < 2) {
+      pinchStartDist = null;
+      pinchStartK = null;
+    }
+  });
+
+  // --- Zoom (wheel) ---
   canvas.addEventListener("wheel", (e) => {
     e.preventDefault();
     const rect = canvas.getBoundingClientRect();
@@ -384,8 +485,8 @@ const graphData = buildGraphData(allNotes);
     draw();
   }, { passive: false });
 
-  // --- Hide tooltip when mouse leaves canvas or tooltip ---
-  canvas.addEventListener("mouseleave", () => {
+  // --- Hide tooltip when pointer/mouse leaves ---
+  canvas.addEventListener("pointerleave", () => {
     if (!tooltip.matches(":hover")) hideTooltip();
   });
 
@@ -393,137 +494,6 @@ const graphData = buildGraphData(allNotes);
     canvas.style.cursor = "grab";
     hideTooltip();
   });
-
-  // --- Touch interaction ---
-  let touchDragNode: SimNode | null = null;
-  let touchPanStart: { x: number; y: number; tx: number; ty: number } | null = null;
-  let pinchStart: { dist: number; k: number; mx: number; my: number } | null = null;
-  let touchStartPos: { x: number; y: number } | null = null;
-
-  function getTouchPos(e: TouchEvent, index = 0): { x: number; y: number } {
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: e.touches[index].clientX - rect.left,
-      y: e.touches[index].clientY - rect.top,
-    };
-  }
-
-  function pinchDist(e: TouchEvent): number {
-    const dx = e.touches[0].clientX - e.touches[1].clientX;
-    const dy = e.touches[0].clientY - e.touches[1].clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  function pinchMid(e: TouchEvent): { x: number; y: number } {
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left,
-      y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top,
-    };
-  }
-
-  canvas.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-
-    if (e.touches.length === 2) {
-      // Start pinch zoom
-      touchDragNode = null;
-      touchPanStart = null;
-      const mid = pinchMid(e);
-      pinchStart = { dist: pinchDist(e), k: transform.k, mx: mid.x, my: mid.y };
-      return;
-    }
-
-    if (e.touches.length === 1) {
-      pinchStart = null;
-      const pos = getTouchPos(e);
-      touchStartPos = { x: pos.x, y: pos.y };
-      const node = findNode(pos.x, pos.y);
-
-      if (node) {
-        touchDragNode = node;
-        const [wx, wy] = toWorld(pos.x, pos.y);
-        node.fx = wx;
-        node.fy = wy;
-        simulation.alphaTarget(0.1).restart();
-      } else {
-        touchPanStart = { x: pos.x, y: pos.y, tx: transform.x, ty: transform.y };
-      }
-    }
-  }, { passive: false });
-
-  canvas.addEventListener("touchmove", (e) => {
-    e.preventDefault();
-
-    if (e.touches.length === 2 && pinchStart) {
-      const newDist = pinchDist(e);
-      const ratio = newDist / pinchStart.dist;
-      const newK = Math.max(0.05, Math.min(5, pinchStart.k * ratio));
-      const scaleRatio = newK / transform.k;
-
-      transform.x = pinchStart.mx - scaleRatio * (pinchStart.mx - transform.x);
-      transform.y = pinchStart.my - scaleRatio * (pinchStart.my - transform.y);
-      transform.k = newK;
-      draw();
-      return;
-    }
-
-    if (e.touches.length === 1) {
-      const pos = getTouchPos(e);
-
-      if (touchDragNode) {
-        const [wx, wy] = toWorld(pos.x, pos.y);
-        touchDragNode.fx = wx;
-        touchDragNode.fy = wy;
-        simulation.alpha(0.1).restart();
-        touchStartPos = null; // moved — not a tap
-      } else if (touchPanStart) {
-        transform.x = touchPanStart.tx + (pos.x - touchPanStart.x);
-        transform.y = touchPanStart.ty + (pos.y - touchPanStart.y);
-        draw();
-        touchStartPos = null; // moved — not a tap
-      }
-    }
-  }, { passive: false });
-
-  canvas.addEventListener("touchend", (e) => {
-    e.preventDefault();
-
-    // Handle tap (no significant movement)
-    if (touchStartPos && e.changedTouches.length === 1) {
-      const rect = canvas.getBoundingClientRect();
-      const endX = e.changedTouches[0].clientX - rect.left;
-      const endY = e.changedTouches[0].clientY - rect.top;
-      const dx = endX - touchStartPos.x;
-      const dy = endY - touchStartPos.y;
-
-      if (dx * dx + dy * dy < 100) { // < 10px movement
-        const node = findNode(endX, endY);
-        if (node) {
-          hoveredNode = node;
-          connectedIds = getConnected(node);
-          showTooltip(node, endX, endY);
-          draw();
-        } else {
-          hideTooltip();
-        }
-      }
-    }
-
-    if (touchDragNode) {
-      touchDragNode.fx = null;
-      touchDragNode.fy = null;
-      simulation.alphaTarget(0);
-      touchDragNode = null;
-    }
-
-    touchPanStart = null;
-    touchStartPos = null;
-
-    if (e.touches.length < 2) {
-      pinchStart = null;
-    }
-  }, { passive: false });
 
   // --- Resize ---
   window.addEventListener("resize", () => {

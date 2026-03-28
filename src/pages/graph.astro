@@ -298,7 +298,7 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
   let panStart: { x: number; y: number; tx: number; ty: number } | null = null;
   let pinchStartDist: number | null = null;
   let pinchStartK: number | null = null;
-  let tapStart: { x: number; y: number } | null = null;
+  let wasDragged = false; // set true when drag/pan threshold crossed
   const DRAG_THRESHOLD = 25; // squared px before drag activates
 
   function getPointerPos(e: PointerEvent): { x: number; y: number } {
@@ -336,7 +336,7 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
     }
 
     if (activePointers.size === 1) {
-      tapStart = { x: pos.x, y: pos.y };
+      wasDragged = false;
       const node = findNode(pos.x, pos.y);
 
       if (node) {
@@ -373,17 +373,18 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
     // Single pointer
     if (activePointers.size === 1) {
       // Promote pending node to drag after movement threshold
-      if (pendingNode && tapStart) {
-        const dx = pos.x - tapStart.x;
-        const dy = pos.y - tapStart.y;
+      if (pendingNode && !wasDragged) {
+        const startPos = [...activePointers.values()][0];
+        const dx = pos.x - startPos.x;
+        const dy = pos.y - startPos.y;
         if (dx * dx + dy * dy > DRAG_THRESHOLD) {
+          wasDragged = true;
           dragNode = pendingNode;
           const [wx, wy] = toWorld(pos.x, pos.y);
           dragNode.fx = wx;
           dragNode.fy = wy;
           simulation.alphaTarget(0.1).restart();
           pendingNode = null;
-          tapStart = null;
         }
         return; // Below threshold — wait for more movement or pointerup
       }
@@ -397,19 +398,20 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
       }
 
       if (panStart) {
-        // Don't start panning until past threshold (preserves tapStart for tap detection)
         const dx = pos.x - panStart.x;
         const dy = pos.y - panStart.y;
         if (dx * dx + dy * dy > DRAG_THRESHOLD) {
-          tapStart = null; // Committed to pan — no longer a tap
+          wasDragged = true;
         }
         transform.x = panStart.tx + (pos.x - panStart.x);
         transform.y = panStart.ty + (pos.y - panStart.y);
         draw();
         return;
       }
+    }
 
-      // Hover (mouse only — no active drag/pan means pointer is just moving)
+    // Hover detection (works with no buttons pressed — activePointers is empty)
+    if (activePointers.size <= 1 && !dragNode && !panStart) {
       const node = findNode(pos.x, pos.y);
       if (node !== hoveredNode) {
         hoveredNode = node;
@@ -432,24 +434,6 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
 
   canvas.addEventListener("pointerup", (e) => {
     e.preventDefault();
-    const pos = getPointerPos(e);
-
-    // Handle tap (no significant movement)
-    if (tapStart && activePointers.size === 1) {
-      const dx = pos.x - tapStart.x;
-      const dy = pos.y - tapStart.y;
-      if (dx * dx + dy * dy < 100) {
-        const node = findNode(pos.x, pos.y);
-        if (node) {
-          hoveredNode = node;
-          connectedIds = getConnected(node);
-          showTooltip(node, pos.x, pos.y);
-          draw();
-        } else {
-          hideTooltip();
-        }
-      }
-    }
 
     if (dragNode) {
       dragNode.fx = null;
@@ -460,7 +444,6 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
 
     pendingNode = null;
     panStart = null;
-    tapStart = null;
     activePointers.delete(e.pointerId);
 
     if (activePointers.size < 2) {
@@ -483,10 +466,25 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
     }
     pendingNode = null;
     panStart = null;
-    tapStart = null;
     if (activePointers.size < 2) {
       pinchStartDist = null;
       pinchStartK = null;
+    }
+  });
+
+  // --- Click/tap handler (reliable across desktop & mobile) ---
+  canvas.addEventListener("click", (e) => {
+    if (wasDragged) return;
+    const rect = canvas.getBoundingClientRect();
+    const pos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    const node = findNode(pos.x, pos.y);
+    if (node) {
+      hoveredNode = node;
+      connectedIds = getConnected(node);
+      showTooltip(node, pos.x, pos.y);
+      draw();
+    } else {
+      hideTooltip();
     }
   });
 

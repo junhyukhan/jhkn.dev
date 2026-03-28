@@ -36,7 +36,7 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
     </div>
 
     <div id="graph-container" class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50"
-      style="height: 70vh;">
+      style="height: 70vh; touch-action: none;">
       <canvas id="graph-canvas" style="touch-action: none;"></canvas>
     </div>
   </div>
@@ -385,7 +385,7 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
           pendingNode = null;
           tapStart = null;
         }
-        return;
+        return; // Below threshold — wait for more movement or pointerup
       }
 
       if (dragNode) {
@@ -397,10 +397,15 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
       }
 
       if (panStart) {
+        // Don't start panning until past threshold (preserves tapStart for tap detection)
+        const dx = pos.x - panStart.x;
+        const dy = pos.y - panStart.y;
+        if (dx * dx + dy * dy > DRAG_THRESHOLD) {
+          tapStart = null; // Committed to pan — no longer a tap
+        }
         transform.x = panStart.tx + (pos.x - panStart.x);
         transform.y = panStart.ty + (pos.y - panStart.y);
         draw();
-        tapStart = null;
         return;
       }
 

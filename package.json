@@ -23,6 +23,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.16.6",
+    "d3-force": "^3.0.0",
     "remark-wiki-link": "^2.0.1",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3"

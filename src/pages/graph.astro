@@ -294,10 +294,12 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
   // --- Unified pointer interaction ---
   const activePointers = new Map<number, { x: number; y: number }>();
   let dragNode: SimNode | null = null;
+  let pendingNode: SimNode | null = null; // node under pointer, not yet dragging
   let panStart: { x: number; y: number; tx: number; ty: number } | null = null;
   let pinchStartDist: number | null = null;
   let pinchStartK: number | null = null;
   let tapStart: { x: number; y: number } | null = null;
+  const DRAG_THRESHOLD = 25; // squared px before drag activates
 
   function getPointerPos(e: PointerEvent): { x: number; y: number } {
     const rect = canvas.getBoundingClientRect();
@@ -325,6 +327,7 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
     if (activePointers.size === 2) {
       // Start pinch — cancel any single-pointer action
       dragNode = null;
+      pendingNode = null;
       panStart = null;
       tapStart = null;
       pinchStartDist = getPointerDist();
@@ -337,12 +340,10 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
       const node = findNode(pos.x, pos.y);
 
       if (node) {
-        dragNode = node;
-        const [wx, wy] = toWorld(pos.x, pos.y);
-        node.fx = wx;
-        node.fy = wy;
-        simulation.alphaTarget(0.1).restart();
+        // Don't start dragging yet — wait for movement past threshold
+        pendingNode = node;
       } else {
+        pendingNode = null;
         panStart = { x: pos.x, y: pos.y, tx: transform.x, ty: transform.y };
         canvas.style.cursor = "grabbing";
       }
@@ -371,12 +372,27 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
 
     // Single pointer
     if (activePointers.size === 1) {
+      // Promote pending node to drag after movement threshold
+      if (pendingNode && tapStart) {
+        const dx = pos.x - tapStart.x;
+        const dy = pos.y - tapStart.y;
+        if (dx * dx + dy * dy > DRAG_THRESHOLD) {
+          dragNode = pendingNode;
+          const [wx, wy] = toWorld(pos.x, pos.y);
+          dragNode.fx = wx;
+          dragNode.fy = wy;
+          simulation.alphaTarget(0.1).restart();
+          pendingNode = null;
+          tapStart = null;
+        }
+        return;
+      }
+
       if (dragNode) {
         const [wx, wy] = toWorld(pos.x, pos.y);
         dragNode.fx = wx;
         dragNode.fy = wy;
         simulation.alpha(0.1).restart();
-        tapStart = null;
         return;
       }
 
@@ -437,6 +453,7 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
       dragNode = null;
     }
 
+    pendingNode = null;
     panStart = null;
     tapStart = null;
     activePointers.delete(e.pointerId);
@@ -459,6 +476,7 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
       simulation.alphaTarget(0);
       dragNode = null;
     }
+    pendingNode = null;
     panStart = null;
     tapStart = null;
     if (activePointers.size < 2) {

@@ -418,9 +418,11 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
 
   canvas.addEventListener("pointerup", (e) => {
     e.preventDefault();
+    const pos = getPointerPos(e);
     releasePointer(e.pointerId);
     if (activePointers.size === 0) {
-      canvas.style.cursor = hoveredNode ? "pointer" : "grab";
+      const node = findNode(pos.x, pos.y);
+      canvas.style.cursor = node ? "pointer" : "grab";
     }
   });
 

@@ -299,6 +299,7 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
   let pinchStartDist: number | null = null;
   let pinchStartK: number | null = null;
   let wasDragged = false; // set true when drag/pan threshold crossed
+  let pointerStart: { x: number; y: number } | null = null; // initial position for threshold checks
   const DRAG_THRESHOLD = 25; // squared px before drag activates
 
   function getPointerPos(e: PointerEvent): { x: number; y: number } {
@@ -329,7 +330,7 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
       dragNode = null;
       pendingNode = null;
       panStart = null;
-      tapStart = null;
+      wasDragged = true;
       pinchStartDist = getPointerDist();
       pinchStartK = transform.k;
       return;
@@ -337,6 +338,7 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
 
     if (activePointers.size === 1) {
       wasDragged = false;
+      pointerStart = { x: pos.x, y: pos.y };
       const node = findNode(pos.x, pos.y);
 
       if (node) {
@@ -373,10 +375,9 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
     // Single pointer
     if (activePointers.size === 1) {
       // Promote pending node to drag after movement threshold
-      if (pendingNode && !wasDragged) {
-        const startPos = [...activePointers.values()][0];
-        const dx = pos.x - startPos.x;
-        const dy = pos.y - startPos.y;
+      if (pendingNode && !wasDragged && pointerStart) {
+        const dx = pos.x - pointerStart.x;
+        const dy = pos.y - pointerStart.y;
         if (dx * dx + dy * dy > DRAG_THRESHOLD) {
           wasDragged = true;
           dragNode = pendingNode;
@@ -410,25 +411,10 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
       }
     }
 
-    // Hover detection (works with no buttons pressed — activePointers is empty)
-    if (activePointers.size <= 1 && !dragNode && !panStart) {
+    // Hover cursor (desktop only — no buttons pressed)
+    if (activePointers.size === 0) {
       const node = findNode(pos.x, pos.y);
-      if (node !== hoveredNode) {
-        hoveredNode = node;
-        connectedIds = node ? getConnected(node) : null;
-        canvas.style.cursor = node ? "pointer" : "grab";
-
-        if (node) {
-          showTooltip(node, pos.x, pos.y);
-        } else {
-          if (!tooltip.matches(":hover")) {
-            tooltip.classList.add("hidden");
-          }
-        }
-        draw();
-      } else if (node) {
-        positionTooltip(pos.x, pos.y);
-      }
+      canvas.style.cursor = node ? "pointer" : "grab";
     }
   });
 
@@ -444,6 +430,7 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
 
     pendingNode = null;
     panStart = null;
+    pointerStart = null;
     activePointers.delete(e.pointerId);
 
     if (activePointers.size < 2) {
@@ -466,6 +453,7 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
     }
     pendingNode = null;
     panStart = null;
+    pointerStart = null;
     if (activePointers.size < 2) {
       pinchStartDist = null;
       pinchStartK = null;
@@ -488,32 +476,35 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
     }
   });
 
-  // --- Zoom (wheel) ---
+  // --- Wheel: pinch-to-zoom (ctrl+wheel) or scroll-to-pan ---
   canvas.addEventListener("wheel", (e) => {
     e.preventDefault();
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
 
-    const factor = e.deltaY < 0 ? 1.1 : 0.9;
-    const newK = Math.max(0.05, Math.min(5, transform.k * factor));
-    const ratio = newK / transform.k;
+    if (e.ctrlKey) {
+      // Pinch zoom (trackpad) or ctrl+scroll (mouse)
+      const delta = -e.deltaY * 0.01;
+      const factor = Math.pow(2, delta);
+      const newK = Math.max(0.05, Math.min(5, transform.k * factor));
+      const ratio = newK / transform.k;
 
-    transform.x = mx - ratio * (mx - transform.x);
-    transform.y = my - ratio * (my - transform.y);
-    transform.k = newK;
+      transform.x = mx - ratio * (mx - transform.x);
+      transform.y = my - ratio * (my - transform.y);
+      transform.k = newK;
+    } else {
+      // Two-finger scroll → pan
+      transform.x -= e.deltaX;
+      transform.y -= e.deltaY;
+    }
 
     draw();
   }, { passive: false });
 
-  // --- Hide tooltip when pointer/mouse leaves ---
+  // --- Tooltip is click-based: only dismiss on click-elsewhere ---
   canvas.addEventListener("pointerleave", () => {
-    if (!tooltip.matches(":hover")) hideTooltip();
-  });
-
-  tooltip.addEventListener("mouseleave", () => {
     canvas.style.cursor = "grab";
-    hideTooltip();
   });
 
   // --- Resize ---

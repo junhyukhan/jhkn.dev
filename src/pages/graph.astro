@@ -157,7 +157,6 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
     const dimmed = hoveredNode !== null;
     const c = compensate();
 
-    // Draw links
     for (const link of links) {
       const s = link.source as SimNode;
       const t = link.target as SimNode;
@@ -179,7 +178,6 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
       ctx.stroke();
     }
 
-    // Draw nodes
     for (const node of nodes) {
       const r = nodeRadius(node) * c;
       const color = GROUP_COLORS[node.group] || DEFAULT_COLOR;
@@ -420,31 +418,17 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
 
   canvas.addEventListener("pointerup", (e) => {
     e.preventDefault();
-
-    if (dragNode) {
-      dragNode.fx = null;
-      dragNode.fy = null;
-      simulation.alphaTarget(0);
-      dragNode = null;
-    }
-
-    pendingNode = null;
-    panStart = null;
-    pointerStart = null;
-    activePointers.delete(e.pointerId);
-
-    if (activePointers.size < 2) {
-      pinchStartDist = null;
-      pinchStartK = null;
-    }
-
+    releasePointer(e.pointerId);
     if (activePointers.size === 0) {
       canvas.style.cursor = hoveredNode ? "pointer" : "grab";
     }
   });
 
   canvas.addEventListener("pointercancel", (e) => {
-    activePointers.delete(e.pointerId);
+    releasePointer(e.pointerId);
+  });
+
+  function releasePointer(pointerId: number) {
     if (dragNode) {
       dragNode.fx = null;
       dragNode.fy = null;
@@ -454,11 +438,12 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
     pendingNode = null;
     panStart = null;
     pointerStart = null;
+    activePointers.delete(pointerId);
     if (activePointers.size < 2) {
       pinchStartDist = null;
       pinchStartK = null;
     }
-  });
+  }
 
   // --- Click/tap handler (reliable across desktop & mobile) ---
   canvas.addEventListener("click", (e) => {
@@ -502,20 +487,24 @@ const groups = [...new Set(graphData.nodes.map((n) => n.group))].sort();
     draw();
   }, { passive: false });
 
-  // --- Tooltip is click-based: only dismiss on click-elsewhere ---
   canvas.addEventListener("pointerleave", () => {
     canvas.style.cursor = "grab";
   });
 
-  // --- Resize ---
-  window.addEventListener("resize", () => {
+  function onResize() {
     resizeCanvas();
     simulation.force("center", forceCenter(width / 2, height / 2));
     simulation.force("gravityX", forceX(width / 2).strength(0.03));
     simulation.force("gravityY", forceY(height / 2).strength(0.03));
     simulation.alpha(0.3).restart();
-  });
+  }
+  window.addEventListener("resize", onResize);
 
-  // Set initial cursor
+  // Clean up on SPA navigation to prevent leaks
+  document.addEventListener("astro:before-swap", () => {
+    simulation.stop();
+    window.removeEventListener("resize", onResize);
+  }, { once: true });
+
   canvas.style.cursor = "grab";
 </script>

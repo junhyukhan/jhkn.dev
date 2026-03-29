@@ -4,6 +4,10 @@ import { dirname, join } from "node:path";
 
 const CONTENT_DIR = "src/content/notes";
 
+// Only fetch from this prefix within each bucket, strip it from the local path.
+// e.g. "01_public/notes/general/Foo.md" -> "src/content/notes/general/Foo.md"
+const VAULT_PREFIX = "01_public/notes/";
+
 function createClient(accessKeyId, secretAccessKey) {
   return new S3Client({
     region: process.env.REGION || "auto",
@@ -16,11 +20,11 @@ async function fetchBucket(client, bucket, label) {
   const objects = [];
   let continuationToken;
 
-  // List all objects (paginated)
   do {
     const res = await client.send(
       new ListObjectsV2Command({
         Bucket: bucket,
+        Prefix: VAULT_PREFIX,
         ContinuationToken: continuationToken,
       })
     );
@@ -28,18 +32,18 @@ async function fetchBucket(client, bucket, label) {
     continuationToken = res.NextContinuationToken;
   } while (continuationToken);
 
-  console.log(`[${label}] Found ${objects.length} objects in "${bucket}"`);
+  console.log(`[${label}] Found ${objects.length} objects under "${VAULT_PREFIX}" in "${bucket}"`);
 
   let fetched = 0;
   for (const obj of objects) {
-    // Skip non-markdown files and directory markers
     if (!obj.Key || !obj.Key.endsWith(".md")) continue;
 
+    const relativePath = obj.Key.slice(VAULT_PREFIX.length);
     const res = await client.send(
       new GetObjectCommand({ Bucket: bucket, Key: obj.Key })
     );
     const body = await res.Body.transformToString();
-    const dest = join(CONTENT_DIR, obj.Key);
+    const dest = join(CONTENT_DIR, relativePath);
 
     await mkdir(dirname(dest), { recursive: true });
     await writeFile(dest, body, "utf-8");

@@ -23,5 +23,8 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
+# notes fetched from R2 at build time
+src/content/notes/
+
 # cloudflare wrangler
 .wrangler

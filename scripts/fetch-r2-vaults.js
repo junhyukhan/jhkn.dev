@@ -1,6 +1,6 @@
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/client-s3";
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 // Vault configs: each defines where to fetch from and where to write locally.
 // - prefix: only fetch objects under this R2 key prefix (null = fetch everything)
@@ -78,11 +78,17 @@ async function fetchVault(label, config) {
   let fetched = 0;
   for (const obj of mdObjects) {
     const relativePath = prefix ? obj.Key.slice(prefix.length) : obj.Key;
+    const dest = resolve(join(outputDir, relativePath));
+
+    if (!dest.startsWith(resolve(outputDir) + "/")) {
+      console.warn(`[${label}] Skipping "${obj.Key}" — path escapes output directory`);
+      continue;
+    }
+
     const res = await client.send(
       new GetObjectCommand({ Bucket: bucket, Key: obj.Key })
     );
     const body = await res.Body.transformToString();
-    const dest = join(outputDir, relativePath);
 
     await mkdir(dirname(dest), { recursive: true });
     await writeFile(dest, body, "utf-8");

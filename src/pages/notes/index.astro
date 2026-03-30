@@ -33,6 +33,7 @@ const totalCount = sortedNotes.length;
 ---
 
 <BaseLayout pageTitle={pageTitle}>
+	<link slot="head" rel="prefetch" href="/notes-index.json" />
 	<div class="relative mb-12">
 
 		<!--
@@ -274,6 +275,19 @@ const totalCount = sortedNotes.length;
 		}
 		applyFilters();
 	}
+
+	// Append current filter state to note hrefs at click time so the note page
+	// can reconstruct prev/next within the same filtered/sorted list.
+	notesList.addEventListener("click", (e) => {
+		const anchor = (e.target as HTMLElement).closest<HTMLAnchorElement>("a");
+		if (!anchor) return;
+		const qs = location.search;
+		if (qs && qs !== "?") {
+			e.preventDefault();
+			const path = anchor.pathname.endsWith("/") ? anchor.pathname : anchor.pathname + "/";
+			window.location.href = path + qs;
+		}
+	});
 
 	// pageshow fires on both fresh loads and bfcache restores.
 	// When persisted=true (bfcache), the browser may restore the DOM *after*

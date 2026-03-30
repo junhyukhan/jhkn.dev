@@ -13,6 +13,7 @@ const { pageTitle, noindex = false, wide = false } = Astro.props;
 		<meta name="generator" content={Astro.generator} />
 		{noindex && <meta name="robots" content="noindex, nofollow" />}
 		<title>{pageTitle}</title>
+		<slot name="head" />
 	</head>
 	<body class="font-sans text-gray-900 bg-white">
 		<main class={`mx-auto px-4 py-8 ${wide ? "max-w-5xl" : "max-w-2xl"}`}>

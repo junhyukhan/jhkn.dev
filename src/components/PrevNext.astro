@@ -1,0 +1,134 @@
+---
+interface Props {
+	currentSlug: string;
+}
+
+const { currentSlug } = Astro.props;
+---
+
+<nav id="prevnext" data-slug={currentSlug} aria-label="Note navigation" class="font-mono text-sm">
+</nav>
+
+<script>
+	interface NoteEntry {
+		slug: string;
+		title: string;
+		date: string;
+		tags: string[];
+		backlinks: number;
+	}
+
+	const nav = document.getElementById("prevnext") as HTMLElement;
+	const currentSlug = nav.dataset.slug!;
+
+	const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+	const params = new URLSearchParams(location.search);
+	const query = (params.get("q") ?? "").toLowerCase();
+	const sortRaw = params.get("sort") ?? "date-desc";
+	const lastDash = sortRaw.lastIndexOf("-");
+	const sortKey = lastDash > 0 ? sortRaw.slice(0, lastDash) : "date";
+	const sortDir = lastDash > 0 ? sortRaw.slice(lastDash + 1) : "desc";
+	const selectedTags = new Set(params.getAll("tags"));
+	const hasFilterContext =
+		query !== "" ||
+		selectedTags.size > 0 ||
+		sortKey !== "date" ||
+		sortDir !== "desc";
+
+	function sortNotes(notes: NoteEntry[]): NoteEntry[] {
+		return [...notes].sort((a, b) => {
+			if (sortKey === "title") {
+				const diff = a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+				return sortDir === "asc" ? diff : -diff;
+			} else if (sortKey === "backlinks") {
+				const diff = b.backlinks - a.backlinks;
+				return diff !== 0 ? diff : b.date.localeCompare(a.date);
+			} else {
+				const diff = a.date.localeCompare(b.date);
+				return sortDir === "desc" ? -diff : diff;
+			}
+		});
+	}
+
+	function filterNotes(notes: NoteEntry[]): NoteEntry[] {
+		return notes.filter((n) => {
+			const matchesTag =
+				selectedTags.size === 0 || n.tags.some((t) => selectedTags.has(t));
+			const matchesQuery = !query || n.title.toLowerCase().includes(query);
+			return matchesTag && matchesQuery;
+		});
+	}
+
+	function noteLink(slug: string): string {
+		const qs = location.search;
+		return `/notes/${slug}/${qs}`;
+	}
+
+	function buildHTML(
+		prev: NoteEntry | null,
+		next: NoteEntry | null,
+		mismatch: boolean
+	): string {
+		const backHref = hasFilterContext ? `/notes${location.search}` : "/notes";
+		const backText = hasFilterContext ? "← Back to results" : "← All notes";
+		const backLink = `<div class="mb-3">
+				<a href="${backHref}" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">${backText}</a>
+			</div>`;
+
+		const mismatchNote = mismatch
+			? `<p class="text-[10px] text-gray-400 mb-3">Not in current filter — showing all notes</p>`
+			: "";
+
+		const prevCell = prev
+			? `<a href="${noteLink(prev.slug)}" class="group block">
+					<span class="text-[10px] text-gray-400 uppercase tracking-wider">← Prev</span>
+					<span class="block text-blue-600 group-hover:underline truncate mt-0.5">${esc(prev.title)}</span>
+				</a>`
+			: `<span></span>`;
+
+		const nextCell = next
+			? `<a href="${noteLink(next.slug)}" class="group block text-right">
+					<span class="text-[10px] text-gray-400 uppercase tracking-wider">Next →</span>
+					<span class="block text-blue-600 group-hover:underline truncate mt-0.5">${esc(next.title)}</span>
+				</a>`
+			: `<span></span>`;
+
+		return `${backLink}${mismatchNote}<div class="flex justify-between gap-4">
+			<div class="flex-1 min-w-0">${prevCell}</div>
+			<div class="flex-1 min-w-0">${nextCell}</div>
+		</div>`;
+	}
+
+	(async () => {
+		try {
+			const res = await fetch("/notes-index.json");
+			if (!res.ok) return;
+			const allNotes: NoteEntry[] = await res.json();
+
+			const sorted = sortNotes(allNotes);
+			const filtered = filterNotes(sorted);
+
+			let list = filtered;
+			let mismatch = false;
+
+			let idx = filtered.findIndex((n) => n.slug === currentSlug);
+			if (idx === -1) {
+				// Current note not in filtered results — fall back to default order
+				const defaultSorted = [...allNotes].sort((a, b) =>
+					b.date.localeCompare(a.date)
+				);
+				list = defaultSorted;
+				idx = defaultSorted.findIndex((n) => n.slug === currentSlug);
+				mismatch = hasFilterContext;
+			}
+
+			const prev = idx > 0 ? list[idx - 1] : null;
+			const next = idx < list.length - 1 ? list[idx + 1] : null;
+
+			nav.innerHTML = buildHTML(prev, next, mismatch);
+		} catch {
+			// Silently fail — nav stays empty
+		}
+	})();
+</script>

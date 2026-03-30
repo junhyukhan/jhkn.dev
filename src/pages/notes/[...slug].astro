@@ -5,6 +5,7 @@ import { getNoteTitle } from "../../utils/note";
 import { buildBacklinksWithContextMap } from "../../utils/backlinks";
 import TagList from "../../components/TagList.astro";
 import Backlinks from "../../components/Backlinks.astro";
+import PrevNext from "../../components/PrevNext.astro";
 
 export async function getStaticPaths() {
     const notesEntries = await getCollection("notes");
@@ -34,6 +35,7 @@ const title = getNoteTitle(entry);
         </div>
     </article>
     <footer class="mt-12 pt-8 border-t border-gray-100 space-y-6">
+        <PrevNext currentSlug={entry.slug} />
         <div>
             <span
                 class="font-mono text-xs text-gray-400 uppercase tracking-widest"

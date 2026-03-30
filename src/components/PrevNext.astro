@@ -21,11 +21,14 @@ const { currentSlug } = Astro.props;
 	const nav = document.getElementById("prevnext") as HTMLElement;
 	const currentSlug = nav.dataset.slug!;
 
+	const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
 	const params = new URLSearchParams(location.search);
 	const query = (params.get("q") ?? "").toLowerCase();
-	const sortParam = (params.get("sort") ?? "date-desc").split("-");
-	const sortKey = sortParam[0] ?? "date";
-	const sortDir = sortParam[1] ?? "desc";
+	const sortRaw = params.get("sort") ?? "date-desc";
+	const lastDash = sortRaw.lastIndexOf("-");
+	const sortKey = lastDash > 0 ? sortRaw.slice(0, lastDash) : "date";
+	const sortDir = lastDash > 0 ? sortRaw.slice(lastDash + 1) : "desc";
 	const selectedTags = new Set(params.getAll("tags"));
 	const hasFilterContext =
 		query !== "" ||
@@ -80,14 +83,14 @@ const { currentSlug } = Astro.props;
 		const prevCell = prev
 			? `<a href="${noteLink(prev.slug)}" class="group block">
 					<span class="text-[10px] text-gray-400 uppercase tracking-wider">← Prev</span>
-					<span class="block text-blue-600 group-hover:underline truncate mt-0.5">${prev.title}</span>
+					<span class="block text-blue-600 group-hover:underline truncate mt-0.5">${esc(prev.title)}</span>
 				</a>`
 			: `<span></span>`;
 
 		const nextCell = next
 			? `<a href="${noteLink(next.slug)}" class="group block text-right">
 					<span class="text-[10px] text-gray-400 uppercase tracking-wider">Next →</span>
-					<span class="block text-blue-600 group-hover:underline truncate mt-0.5">${next.title}</span>
+					<span class="block text-blue-600 group-hover:underline truncate mt-0.5">${esc(next.title)}</span>
 				</a>`
 			: `<span></span>`;
 
@@ -97,12 +100,10 @@ const { currentSlug } = Astro.props;
 		</div>`;
 	}
 
-	let prevHref: string | null = null;
-	let nextHref: string | null = null;
-
 	(async () => {
 		try {
 			const res = await fetch("/notes-index.json");
+			if (!res.ok) return;
 			const allNotes: NoteEntry[] = await res.json();
 
 			const sorted = sortNotes(allNotes);
@@ -125,20 +126,9 @@ const { currentSlug } = Astro.props;
 			const prev = idx > 0 ? list[idx - 1] : null;
 			const next = idx < list.length - 1 ? list[idx + 1] : null;
 
-			if (prev) prevHref = noteLink(prev.slug);
-			if (next) nextHref = noteLink(next.slug);
-
 			nav.innerHTML = buildHTML(prev, next, mismatch);
 		} catch {
 			// Silently fail — nav stays empty
 		}
 	})();
-
-	document.addEventListener("keydown", (e) => {
-		const tag = (document.activeElement as HTMLElement)?.tagName;
-		if (["INPUT", "TEXTAREA", "SELECT"].includes(tag)) return;
-		if ((document.activeElement as HTMLElement)?.isContentEditable) return;
-		if (e.key === "ArrowLeft" && prevHref) window.location.href = prevHref;
-		if (e.key === "ArrowRight" && nextHref) window.location.href = nextHref;
-	});
 </script>

@@ -284,7 +284,8 @@ const totalCount = sortedNotes.length;
 		const qs = location.search;
 		if (qs && qs !== "?") {
 			e.preventDefault();
-			window.location.href = anchor.pathname + qs;
+			const path = anchor.pathname.endsWith("/") ? anchor.pathname : anchor.pathname + "/";
+			window.location.href = path + qs;
 		}
 	});
 

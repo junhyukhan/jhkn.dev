@@ -12,8 +12,6 @@ Personal blog/digital garden built with Astro, deployed to Cloudflare Pages. The
 npm run dev          # Start dev server at localhost:4321
 npm run build        # Build to ./dist/ (auto-runs prebuild first)
 npm run preview      # Preview production build locally
-npm run sync         # Sync notes from iCloud to src/content/
-npm run sync-and-push # Sync from iCloud then push to git/R2
 npm run deploy       # Deploy dist/ to Cloudflare Pages
 npm run publish      # Clean, build, and deploy (full publish flow)
 ```
@@ -36,10 +34,7 @@ The site uses `remark-wiki-link` for `[[internal links]]`. The plugin configurat
 
 ### Content Pipeline
 
-Content flows through two mechanisms:
-
-- **R2 fetch (build-time)**: `npm run prebuild` (auto-runs before `npm run build`) executes `scripts/fetch-r2-vaults.js`, which pulls notes from a Cloudflare R2 bucket (`01_public/notes/` prefix) into `src/content/notes/`. Notes are **not committed to git** — they're fetched fresh each build for stateless Cloudflare Pages deploys.
-- **iCloud sync (local)**: `npm run sync` runs `scripts/sync-public-notes.sh` to rsync from iCloud to `src/content/` for local development. `npm run sync-and-push` combines sync with a git push.
+`npm run prebuild` (auto-runs before `npm run build`) executes `scripts/fetch-r2-vaults.js`, which pulls notes from a Cloudflare R2 bucket (`01_public/notes/` prefix) into `src/content/notes/`. Notes are **not committed to git** — they're fetched fresh each build for stateless Cloudflare Pages deploys. R2 credentials are configured via `.env` (do not read or modify this file).
 
 ### Graph Visualization
 

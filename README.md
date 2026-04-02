@@ -28,8 +28,6 @@ All commands are run from the root of the project, from a terminal:
 | `npm run build` | Build your production site to `./dist/` (auto-fetches content from R2) |
 | `npm run preview` | Preview your build locally, before deploying |
 | `npm run astro` | Run Astro CLI commands |
-| `npm run sync` | Sync public notes from iCloud to local repo |
-| `npm run sync-and-push` | Sync from iCloud then push to git/R2 |
 | `npm run clean` | Clean `./dist/` |
 | `npm run deploy-preview` | Preview deploy on Cloudflare Pages |
 | `npm run deploy` | Deploy to Cloudflare Pages |

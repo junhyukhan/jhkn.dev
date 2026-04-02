@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Personal blog/digital garden built with Astro, deployed to Cloudflare Pages. The site displays notes synced from iCloud and supports wiki-style internal linking between notes.
+Personal blog/digital garden built with Astro, deployed to Cloudflare Pages. The site displays notes fetched from Cloudflare R2 and supports wiki-style internal linking between notes.
 
 ## Commands
 
@@ -21,7 +21,7 @@ npm run publish      # Clean, build, and deploy (full publish flow)
 ### Content Collections
 
 One content collection defined in `src/content/config.ts`:
-- **notes**: Digital garden notes synced from iCloud/R2 (includes subdirectories for LeetCode problems and quotes)
+- **notes**: Digital garden notes fetched from R2 (includes subdirectories for LeetCode problems and quotes)
 
 The notes collection schema: `created`, `edited` (optional), `tags`, `title` (optional, falls back to filename), `priority` (optional, defaults to 0). Content is organized under `src/content/notes/` with subdirectories like `leetcode/` and `quotes/`.
 

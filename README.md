@@ -4,7 +4,7 @@
 
 ```text
 /
-├── scripts/              # Build & sync scripts (R2 fetch, iCloud sync)
+├── scripts/              # Build scripts (R2 content fetch)
 ├── public/
 ├── src/
 │   ├── components/

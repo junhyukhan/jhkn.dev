@@ -4,7 +4,7 @@
 
 ```text
 /
-├── scripts/              # Build scripts (R2 content fetch)
+├── scripts/              # Content sync script (iCloud vault → repo)
 ├── public/
 ├── src/
 │   ├── components/
@@ -25,11 +25,12 @@ All commands are run from the root of the project, from a terminal:
 | :--- | :--- |
 | `npm install` | Installs dependencies |
 | `npm run dev` | Starts local dev server at `localhost:4321` |
-| `npm run build` | Build your production site to `./dist/` (auto-fetches content from R2) |
+| `npm run sync` | Sync notes from the iCloud Obsidian vault into `src/content/` |
+| `npm run build` | Build your production site to `./dist/` |
 | `npm run preview` | Preview your build locally, before deploying |
 | `npm run astro` | Run Astro CLI commands |
 | `npm run clean` | Clean `./dist/` |
-| `npm run deploy-preview` | Preview deploy on Cloudflare Pages |
-| `npm run deploy` | Deploy to Cloudflare Pages |
-| `npm run publish` | Clean, build, and deploy to Cloudflare Pages |
+| `npm run deploy-preview` | Local preview via `wrangler dev` |
+| `npm run deploy` | Deploy to Cloudflare Workers |
+| `npm run publish` | Clean, build, and deploy to Cloudflare Workers |
 

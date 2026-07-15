@@ -4,15 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Personal blog/digital garden built with Astro, deployed to Cloudflare Pages. The site displays notes fetched from Cloudflare R2 and supports wiki-style internal linking between notes.
+Personal blog/digital garden built with Astro, deployed to Cloudflare Workers (push-to-deploy: commits to `main` trigger a stateless cloud build). Notes are authored in a local iCloud Obsidian vault, synced into the repo and committed; the site supports wiki-style internal linking between notes.
 
 ## Commands
 
 ```bash
 npm run dev          # Start dev server at localhost:4321
-npm run build        # Build to ./dist/ (auto-runs prebuild first)
+npm run sync         # Sync notes from the iCloud Obsidian vault into src/content/
+npm run build        # Build to ./dist/
 npm run preview      # Preview production build locally
-npm run deploy       # Deploy dist/ to Cloudflare Pages
+npm run deploy       # Deploy to Cloudflare Workers (wrangler deploy)
 npm run publish      # Clean, build, and deploy (full publish flow)
 ```
 
@@ -21,7 +22,7 @@ npm run publish      # Clean, build, and deploy (full publish flow)
 ### Content Collections
 
 One content collection defined in `src/content/config.ts`:
-- **notes**: Digital garden notes fetched from R2 (includes subdirectories for LeetCode problems and quotes)
+- **notes**: Digital garden notes synced from the iCloud Obsidian vault (includes subdirectories for LeetCode problems and quotes)
 
 The notes collection schema: `created`, `edited` (optional), `tags`, `title` (optional, falls back to filename), `priority` (optional, defaults to 0). Content is organized under `src/content/notes/` with subdirectories like `leetcode/` and `quotes/`.
 
@@ -34,7 +35,9 @@ The site uses `remark-wiki-link` for `[[internal links]]`. The plugin configurat
 
 ### Content Pipeline
 
-`npm run prebuild` (auto-runs before `npm run build`) executes `scripts/fetch-r2-vaults.js`, which pulls notes from a Cloudflare R2 bucket (`01_public/notes/` prefix) into `src/content/notes/`. Notes are **not committed to git** — they're fetched fresh each build for stateless Cloudflare Pages deploys. R2 credentials are configured via `.env` (do not read or modify this file).
+Notes are **committed to git** under `src/content/notes/`. Authoring flow: edit in Obsidian → `npm run sync` → commit → push. `npm run sync` runs `scripts/sync-public-notes.sh`, which rsyncs the public notes from the local iCloud Obsidian vault (paths in `.env`: `ICLOUD_PATH`, `REPO_CONTENT_PATH`) into `src/content/`.
+
+The Cloudflare build is **stateless**: it builds from the committed notes and fetches nothing at build time (no R2, no iCloud access in the cloud). Content must therefore be committed before pushing.
 
 ### Graph Visualization
 

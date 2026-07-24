@@ -6,6 +6,13 @@ Guidance for any coding agent working in this repository.
 
 Personal blog/digital garden built with Astro, deployed to Cloudflare Workers (push-to-deploy: commits to `main` trigger a stateless cloud build). Notes are authored in a local iCloud Obsidian vault, synced into the repo and committed; the site supports wiki-style internal linking between notes.
 
+## Docs
+
+Project state and decisions live in `docs/` — start at **`docs/README.md`** (status + index).
+Design decisions are captured **verbatim** in `docs/decisions/` (one file per topic; copy
+`docs/decisions/TEMPLATE.md`). This is the workspace-wide shape — see
+`../docs/repo-docs-standardization.md`.
+
 ## Commands
 
 ```bash

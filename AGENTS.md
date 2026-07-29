@@ -1,3 +1,14 @@
+---
+workspace:
+  readfirst: docs/README.md
+  decisions: docs/decisions/
+  backlog: []
+  # build only — no lint/typecheck/test wired. The weak verifier is what caps
+  # this repo at chore; promote only once something here can actually fail.
+  verify: npm run build
+  autonomy: chore
+---
+
 # AGENTS.md — jhkn-dev
 
 Guidance for any coding agent working in this repository.

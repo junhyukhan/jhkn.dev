@@ -2,7 +2,7 @@
 workspace:
   readfirst: docs/README.md
   decisions: docs/decisions/
-  backlog: []
+  backlog: [docs/backlog.md]
   # build only — no lint/typecheck/test wired. The weak verifier is what caps
   # this repo at chore; promote only once something here can actually fail.
   verify: npm run build

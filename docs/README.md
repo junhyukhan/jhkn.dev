@@ -14,6 +14,9 @@ _(nothing in progress)_
 - **`decisions/`** — design decisions & specs, one file per topic, each a **verbatim ask +
   Discussion** (copy `decisions/TEMPLATE.md` to start one). The append-only record of *why*
   things are the way they are.
+  - [`decisions/content-pipeline.md`](decisions/content-pipeline.md) — notes are committed to git,
+    not fetched from R2 at build time; the build fetches nothing.
+- **[`backlog.md`](backlog.md)** — deferred, non-blocking work. State, rewritten in place.
 
 <!-- Add state singletons here as the repo grows — one file each, rewritten in place:
 - **`roadmap.md`** — phases / what's planned

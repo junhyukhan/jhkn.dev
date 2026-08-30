@@ -1,3 +1,14 @@
+---
+type: Decision
+title: Content pipeline — how notes get from Obsidian into the build
+description: >-
+  R2 was dropped 2026-07-16 and notes are committed to git under `src/content/notes/`, synced
+  across from the iCloud Obsidian vault, so the Cloudflare build is stateless.
+status: stable
+tags: [jhkn-dev, content, obsidian, cloudflare, r2, build]
+generated: { by: human:junhyukhan, at: 2026-07-30T00:00:00Z }
+---
+
 # Content pipeline — how notes get from Obsidian into the build
 
 **Status:** DECIDED · record written 2026-07-30, reconstructed from artifacts

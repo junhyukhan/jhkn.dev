@@ -6,7 +6,7 @@ description: >-
   across from the iCloud Obsidian vault, so the Cloudflare build is stateless.
 status: stable
 tags: [jhkn-dev, content, obsidian, cloudflare, r2, build]
-generated: { by: human:junhyukhan, at: 2026-07-30T00:00:00Z }
+generated: { by: claude/opus-5, at: 2026-07-30T00:00:00Z }
 ---
 
 # Content pipeline — how notes get from Obsidian into the build

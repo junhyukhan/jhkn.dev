@@ -4,7 +4,7 @@ tags:
   - blog
   - feature
 created: 2026-01-06 10:01
-edited: 2026-01-06 10:01
+publish: true
 ---
 Initial thought process:
 I want to distinguish between public/private and published/draft.

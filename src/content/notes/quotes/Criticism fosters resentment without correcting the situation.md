@@ -3,7 +3,7 @@ tags:
   - books
   - quote
 created: 2025-06-16 03:18
-edited: 2025-06-16 03:18
+publish: true
 ---
 The resentment that criticism engenders can demoralize employees, family members, and friends, and still not correct the situation that has been condemned.
 

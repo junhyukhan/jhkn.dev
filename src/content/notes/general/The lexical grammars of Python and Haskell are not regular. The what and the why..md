@@ -5,7 +5,7 @@ tags:
   - cs
   - crafting-interpreters
 created: 2025-06-16 03:13
-edited: 2025-06-16 03:13
+publish: true
 ---
 In the context of programming language parsing, a **lexical grammar** defines the rules for breaking down raw source code into a stream of elementary units called **tokens** (e.g., keywords, identifiers, operators, literals). A grammar is considered **regular** if it can be described by a regular expression or, equivalently, recognized by a [[finite automaton]] (FA).
 

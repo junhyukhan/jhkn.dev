@@ -2,7 +2,7 @@
 tags:
   - cs
 created: 2025-06-16 03:30
-edited: 2025-06-16 03:30
+publish: true
 ---
 for [[Lox]], number literals are floating point at runtime, but decimal and integer literals are supported.
 

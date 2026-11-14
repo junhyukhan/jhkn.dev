@@ -4,7 +4,7 @@ tags:
   - llm
   - question
 created: 2025-08-21 10:00 
-edited: 2025-08-21 10:00
+publish: true
 ---
 **Perceived Latency** is how fast a process _feels_ to the user, which can be managed with smart UX design even if the [[Actual Latency]] is unchanged.
 

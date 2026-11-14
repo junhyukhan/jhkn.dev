@@ -3,7 +3,7 @@ tags:
   - cs
   - productivity
 created: 2025-06-24 09:48
-edited: 2025-06-24 09:48
+publish: true
 ---
 ```bash
 #!/bin/bash

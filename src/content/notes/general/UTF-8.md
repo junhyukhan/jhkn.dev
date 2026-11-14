@@ -2,7 +2,7 @@
 tags:
   - cs
 created: 2025-06-16 03:23
-edited: 2025-06-16 03:23
+publish: true
 ---
 character [[encoding]] standard.
 [[Unicode]] Transformation Format - 8 bit

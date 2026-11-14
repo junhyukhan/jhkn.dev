@@ -4,6 +4,7 @@ tags:
   - tips
   - vim
 created: 2023-09-18 09:00
+publish: true
 ---
 
 # Search and Replace

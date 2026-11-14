@@ -1,10 +1,10 @@
 ---
 title: Karabiner Switch Input With Right Command Button
 created: 2023-09-18 09:01
-edited: 2023-09-18 09:01
 tags:
   - productivity
 priority: 10
+publish: true
 ---
 
 ### The problem

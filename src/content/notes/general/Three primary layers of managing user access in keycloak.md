@@ -4,7 +4,7 @@ tags:
   - keycloak
   - api
 created: 2026-02-04 18:19
-edited: 2026-02-04 18:19
+publish: true
 ---
 [[Keycloak User session]]
 [[Keycloak access token]]

@@ -4,7 +4,7 @@ tags:
   - blog
   - feature
 created: 2026-01-06 17:35
-edited: 2026-01-06 17:35
+publish: true
 ---
 - [ ] UI
 	- [ ] Add tags in the notes list to easily view different groups.

@@ -3,7 +3,7 @@ tags:
   - crafting-interpreters
   - cs
 created: 2025-06-16 03:14
-edited: 2025-06-16 03:14
+publish: true
 ---
 An expression's main job is to produce a value.
 

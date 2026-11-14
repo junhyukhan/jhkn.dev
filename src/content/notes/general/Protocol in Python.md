@@ -3,7 +3,7 @@ tags:
   - cs
   - python
 created: 2026-01-07 11:04
-edited: 2026-01-07 11:04
+publish: true
 ---
 Protocols in [[Python]]
 

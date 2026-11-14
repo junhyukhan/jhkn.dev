@@ -3,7 +3,7 @@ tags:
   - cs
   - git
 created: 2026-01-21 14:07
-edited: 2026-01-21 14:07
+publish: true
 ---
 ```bash
 git fetch --prune

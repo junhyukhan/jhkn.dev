@@ -3,7 +3,7 @@ tags:
   - cs
   - crafting-interpreters
 created: 2025-06-16 20:43
-edited: 2025-06-16 20:43
+publish: true
 ---
 ```java
 expression     → literal

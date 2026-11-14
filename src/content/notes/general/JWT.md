@@ -3,7 +3,7 @@ tags:
   - api
   - auth
 created: 2026-02-04 18:35
-edited: 2026-02-04 18:35
+publish: true
 ---
 Json Web Tokens.
 

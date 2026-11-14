@@ -4,6 +4,7 @@ tags:
   - config
   - macos
 created: 2023-09-18 09:00
+publish: true
 ---
 #tips 
 # useful MAC configuration settings using terminal commands

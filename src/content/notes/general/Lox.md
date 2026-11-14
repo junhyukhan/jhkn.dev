@@ -3,7 +3,7 @@ tags:
   - cs
   - crafting-interpreters
 created: 2025-06-16 03:24
-edited: 2025-06-16 03:24
+publish: true
 ---
 Garbage Collection
 

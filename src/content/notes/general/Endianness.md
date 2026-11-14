@@ -2,7 +2,7 @@
 tags:
   - cs
 created: 2025-06-16 03:24
-edited: 2025-06-16 03:24
+publish: true
 ---
 When a value uses **more than one byte**, like a 16-bit number (2 bytes), the **order of those bytes** can vary depending on the system:
 

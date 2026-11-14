@@ -76,6 +76,20 @@ part of this decision.
 Nothing was recorded about *why R2 was chosen originally*, so this record cannot say what changed
 Han's mind — only what the new shape is and what it costs. If the reason mattered, it is gone.
 
+## 2026-11-15 — a note is published by `publish: true`, not by sitting in a public folder
+
+> "the 01_public folder holds all my notes that become my public blog notes. but with ai i honestly
+> think that distinction is not
+> necessary anymore."
+
+> "2. a."
+
+> "3. yes though make sure my blog doesn't break as there were subdirectories in the public notes
+> directory that i remember the blog uses."
+
+"a" was: no public folder, a note is private unless `publish: true`; over "everything public unless
+`private: true`". The sync keeps `general/`, `leetcode/` and `quotes/` so no URL moves.
+
 ## Related
 
 - [`../backlog.md`](../backlog.md)

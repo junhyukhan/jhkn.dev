@@ -54,7 +54,7 @@ The site uses `remark-wiki-link` for `[[internal links]]`. The plugin configurat
 
 ### Content Pipeline
 
-Notes are **committed to git** under `src/content/notes/`. Authoring flow: edit in Obsidian → `npm run sync` → commit → push. `npm run sync` runs `scripts/sync-public-notes.sh`, which rsyncs the public notes from the local iCloud Obsidian vault (paths in `.env`: `ICLOUD_PATH`, `REPO_CONTENT_PATH`) into `src/content/`.
+Notes are **committed to git** under `src/content/notes/`. Authoring flow: edit in Obsidian → `npm run sync` → commit → push. `npm run sync` runs `scripts/sync-public-notes.sh`, which copies every vault note whose frontmatter has `publish: true` into `src/content/notes/` (paths in `.env`: `VAULT_PATH`, `REPO_CONTENT_PATH`). Vault `notes/leetcode/` and `notes/quotes/` keep those subfolders; every other published note lands in `general/`, so reorganising the vault never moves a URL.
 
 The Cloudflare build is **stateless**: it builds from the committed notes and fetches nothing at build time (no R2, no iCloud access in the cloud). Content must therefore be committed before pushing.
 

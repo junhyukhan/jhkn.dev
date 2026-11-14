@@ -43,7 +43,7 @@ npm run publish      # Clean, build, and deploy (full publish flow)
 One content collection defined in `src/content/config.ts`:
 - **notes**: Digital garden notes synced from the iCloud Obsidian vault (includes subdirectories for LeetCode problems and quotes)
 
-The notes collection schema: `created`, `edited` (optional), `tags`, `title` (optional, falls back to filename), `priority` (optional, defaults to 0). Content is organized under `src/content/notes/` with subdirectories like `leetcode/` and `quotes/`.
+The notes collection schema: `created`, `tags`, `title` (optional, falls back to filename), `priority` (optional, defaults to 0). Content is organized under `src/content/notes/` with subdirectories like `leetcode/` and `quotes/`.
 
 ### Wiki Links
 
@@ -54,7 +54,7 @@ The site uses `remark-wiki-link` for `[[internal links]]`. The plugin configurat
 
 ### Content Pipeline
 
-Notes are **committed to git** under `src/content/notes/`. Authoring flow: edit in Obsidian → `npm run sync` → commit → push. `npm run sync` runs `scripts/sync-public-notes.sh`, which copies every vault note whose frontmatter has `publish: true` into `src/content/notes/` (paths in `.env`: `VAULT_PATH`, `REPO_CONTENT_PATH`). Vault `notes/leetcode/` and `notes/quotes/` keep those subfolders; every other published note lands in `general/`, so reorganising the vault never moves a URL.
+Notes are **committed to git** under `src/content/notes/`. Authoring flow: edit in Obsidian → `npm run sync` → commit → push. `npm run sync` runs `scripts/sync-public-notes.sh`, which copies every vault note whose frontmatter has `publish: true` into `src/content/notes/` (paths in `.env`: `VAULT_PATH`, `REPO_CONTENT_PATH`). A note under any vault folder named `leetcode` or `quotes` lands in that subfolder; every other published note lands in `general/`, so reorganising the vault never moves a URL. The script refuses to mirror an empty result.
 
 The Cloudflare build is **stateless**: it builds from the committed notes and fetches nothing at build time (no R2, no iCloud access in the cloud). Content must therefore be committed before pushing.
 

@@ -4,7 +4,7 @@ tags:
   - llm
   - question
 created: 2025-08-21 10:00
-edited: 2025-08-21 10:00
+publish: true
 ---
 **Actual Latency** is the real, measurable time it takes for a process to complete, from request to response. For my app, I can reduce this in a few ways:
 

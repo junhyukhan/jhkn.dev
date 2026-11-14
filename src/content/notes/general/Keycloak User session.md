@@ -4,7 +4,7 @@ tags:
   - keycloak
   - api
 created: 2026-02-04 18:17
-edited: 2026-02-04 18:17
+publish: true
 ---
 The User session is the user’s long term connection to keycloak.
 A session is [[Stateful]] and is managed on the keycloak server.

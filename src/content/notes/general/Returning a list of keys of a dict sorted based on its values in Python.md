@@ -4,8 +4,8 @@ tags:
   - python
   - tips
 created: 2026-02-14 19:22
-edited: 2026-02-14 19:22
 link:
+publish: true
 ---
 ```
 data = {'a': 10, 'b': 50, 'c': 20}

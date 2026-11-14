@@ -3,7 +3,7 @@ tags:
   - crafting-interpreters
   - cs
 created: 2025-06-16 03:23
-edited: 2025-06-16 03:23
+publish: true
 ---
 **Front End**
 [[Scanning]]

@@ -4,7 +4,7 @@ tags:
   - python
   - fastapi
 created: 2026-01-28 17:29
-edited: 2026-01-28 17:29
+publish: true
 ---
 ```python
 Annotated[param, Query()]

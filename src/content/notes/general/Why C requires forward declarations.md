@@ -4,7 +4,7 @@ tags:
   - cs
   - c
 created: 2025-06-16 03:22
-edited: 2025-06-16 03:22
+publish: true
 ---
 Some languages were developed during a time period where memory was extremely scarce. The compiler was designed around this limitation
 

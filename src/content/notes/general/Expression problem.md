@@ -3,7 +3,7 @@ tags:
   - cs
   - crafting-interpreters
 created: 2025-06-24 03:05
-edited: 2025-06-24 03:05
+publish: true
 ---
 The styles of programming languages make it harder or easier to either add a new *operation* or a new *function*
 

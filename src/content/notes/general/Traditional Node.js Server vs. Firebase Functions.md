@@ -4,7 +4,7 @@ tags:
   - llm
   - question
 created: 2025-08-21 09:59
-edited: 2025-08-21 09:59
+publish: true
 ---
 This note compares two backend approaches.
 

@@ -3,7 +3,7 @@ tags:
   - cs
   - crafting-interpreters
 created: 2025-06-16 20:28
-edited: 2025-06-16 20:28
+publish: true
 ---
 production rules consists of a *head* and a *body*
 

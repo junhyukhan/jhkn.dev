@@ -3,7 +3,7 @@ tags:
   - cs
   - js
 created: 2025-06-16 03:24
-edited: 2025-06-16 03:24
+publish: true
 ---
 In my current project at work (An LG subsidiary), I had to rewrite some logic that got input from the user, and split up the input into chunks before inserting in the DB.
 

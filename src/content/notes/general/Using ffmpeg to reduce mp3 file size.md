@@ -4,7 +4,7 @@ tags:
   - tips
   - shell
 created: 2026-02-03 23:26
-edited: 2026-02-03 23:26
+publish: true
 ---
 
 `ffmpeg -i <output-filename.mp3> -b:a 128k <input-filename.mp3>`

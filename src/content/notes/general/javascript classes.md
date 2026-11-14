@@ -3,7 +3,7 @@ tags:
   - cs
   - js
 created: 2025-09-12 02:34
-edited: 2025-09-12 02:34
+publish: true
 ---
 they are prototypes.
 

@@ -3,7 +3,7 @@ tags:
   - books
   - quote
 created: 2025-06-16 03:20 
-edited: 2025-06-16 03:20
+publish: true
 ---
 So I am anxious to praise but loath to find fault. If I like anything, I am hearty in my approbation and lavish in my praise.
 

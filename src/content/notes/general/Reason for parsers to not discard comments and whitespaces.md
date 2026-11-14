@@ -5,7 +5,7 @@ tags:
   - question
   - crafting-interpreters
 created: 2024-01-01 10:00
-edited: 2024-01-01 10:00
+publish: true
 ---
 Our scanner here, like most, discards comments and whitespace since those aren’t needed by the parser. Why might you want to write a scanner that does _not_ discard those? What would it be useful for?
 

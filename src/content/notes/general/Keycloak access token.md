@@ -4,7 +4,7 @@ tags:
   - keycloak
   - api
 created: 2026-02-04 18:16
-edited: 2026-02-04 18:16
+publish: true
 ---
 The access token is the short-term pass to a specific service.
 

@@ -5,7 +5,7 @@ tags:
   - fastapi
   - python
 created: 2026-01-28 17:14
-edited: 2026-01-28 17:14
+publish: true
 ---
 Two main methods:
 1. Comma separated values

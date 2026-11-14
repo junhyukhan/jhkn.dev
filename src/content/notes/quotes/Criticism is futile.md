@@ -3,7 +3,7 @@ tags:
   - books
   - quote
 created: 2025-06-16 03:18
-edited: 2025-06-16 03:18
+publish: true
 ---
 Criticism is futile because it puts people on the defensive and usually makes them strive to justify themselves. Criticism is dangerous because it wounds a person's precious pride, hurts their sense of importance, and arouses resentment.
 

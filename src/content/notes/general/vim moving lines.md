@@ -4,6 +4,7 @@ tags:
   - tips
   - vim
 created: 2023-09-18 09:00
+publish: true
 ---
 # moving the current line up and down
 The following key remaps allow you to move the current line up and down, while keeping the indentation of the outgoing line. 

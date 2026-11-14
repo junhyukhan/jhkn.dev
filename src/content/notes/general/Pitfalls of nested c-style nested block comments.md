@@ -6,7 +6,7 @@ tags:
   - crafting-interpreters
   - c
 created: 2025-06-16 03:44
-edited: 2025-06-16 03:44
+publish: true
 ---
 Add support to Lox’s scanner for C-style `/* ... */` block comments. Make sure to handle newlines in them. Consider allowing them to nest. Is adding support for nesting more work than you expected? Why?
 

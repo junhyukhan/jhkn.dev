@@ -2,8 +2,8 @@
 tags: 
   - cs
 created: 2025-07-01 13:31
-edited: 2025-07-01 13:31
 priority: 20
+publish: true
 ---
 At work, I had a situation where I had to switch between WIFI and ethernet on my mac. 
 To do this, I created a script to change the network order in my mac.

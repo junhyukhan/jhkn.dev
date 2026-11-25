@@ -16,10 +16,9 @@ generated: { by: claude/opus-5, at: 2026-09-20T17:50:39Z }
 
 ## Why — the ask (verbatim)
 
-> **Verbatim (Han, 2026-09-21, the opening ask):** "Context: I'm targeting SE/Customer Engineer
-> roles at Cloudflare and VoidZero (now Cloudflare-owned; they maintain Vite, Vitest, Rolldown, Oxc,
-> Vite+). Strategy: become both a user and a contributor to the Vite/Workers seam, using this blog
-> as the real-world deployment that generates the issues.
+> **Verbatim (Han, 2026-09-21, the opening ask; one sentence of personal context removed
+> 2026-11-25):** "[…] Strategy: become both a user and a contributor to the Vite/Workers seam,
+> using this blog as the real-world deployment that generates the issues.
 >
 > This repo: Astro 5 digital garden deployed to Cloudflare Workers, push-to-deploy. Dormant since
 > late July 2026."

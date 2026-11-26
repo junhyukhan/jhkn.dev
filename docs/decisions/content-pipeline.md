@@ -15,18 +15,9 @@ generated: { by: claude/opus-5, at: 2026-07-30T00:00:00Z }
 
 Governs how `src/content/notes/` is populated and what the Cloudflare build depends on.
 
-> ## ⚠ No verbatim ask — this record is reconstructed
->
-> The decision was made on **2026-07-16**. The convention requiring a record with Han's exact words
-> landed on **2026-07-19**, and this repo's `docs/decisions/` was created on **2026-07-24** — both
-> *after*. Dated against `git log` before writing, per
-> `config/docs/decisions/artifact-checking.md`. Nothing was skipped at the time.
->
-> **Reconstructed from commit `1b7aa3b` and the current tree — not from Han.** The reasoning is his;
-> the wording is the agent's, written at commit time. No quote is presented as verbatim. If Han wants
-> his own framing here, it belongs above the Discussion as a dated quote.
->
-> Surfaced 2026-07-30 by the records-owed check in `repos/ops/index.py`.
+> **Reconstructed record.** The decision (2026-07-16) predates decision records. What follows is
+> rebuilt from commit `1b7aa3b` and the current tree: the reasoning is Han's, the wording is the
+> agent's.
 
 ## 2026-07-16 — drop R2; commit the notes to git
 
@@ -78,23 +69,22 @@ Han's mind — only what the new shape is and what it costs. If the reason matte
 
 ## 2026-11-15 — a note is published by `publish: true`, not by sitting in a public folder
 
-> "the 01_public folder holds all my notes that become my public blog notes. but with ai i honestly
-> think that distinction is not
-> necessary anymore."
-
-> "2. a."
-
-> "3. yes though make sure my blog doesn't break as there were subdirectories in the public notes
-> directory that i remember the blog uses."
-
-"a" was: no public folder, a note is private unless `publish: true`; over "everything public unless
-`private: true`". The sync keeps `general/`, `leetcode/` and `quotes/` so no URL moves.
+With AI in the loop, a separate public folder (`01_public`) is no longer needed. A note is private
+unless `publish: true`; over "everything public unless `private: true`". The blog must not break, so
+the sync keeps `general/`, `leetcode/` and `quotes/` and no URL moves.
 
 ## 2026-11-15 — `edited` is dropped from the notes and the schema
 
-> "the updated field never gets used (and it's the same as the created field)"
+It was never used. The field Han called "updated" is `edited`. It equalled `created` in 111 of the 112 vault notes that had it.
 
-The field is `edited`. It equalled `created` in 111 of the 112 vault notes that had it.
+## 2026-11-26 — publishing runs on the workstation: nightly when notes changed, or on demand
+
+The vault's main copy moves from iCloud to the workstation, so the sync can run there instead of
+only on the Mac. `ops/publish.sh` syncs, builds, commits and pushes to `main`, which Cloudflare
+deploys; there is no blog PR. It runs nightly from `blog-publish.timer` and makes no commit when no
+note changed, and an agent starts it on demand with `systemctl --user start blog-publish`. It works
+in its own clone, so it never touches a checkout someone is editing. The cross-repo reasons are in
+the workspace decision log.
 
 ## Related
 

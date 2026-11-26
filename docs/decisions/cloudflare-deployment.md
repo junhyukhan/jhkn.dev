@@ -14,23 +14,14 @@ generated: { by: claude/opus-5, at: 2026-09-20T17:50:39Z }
 
 **Status:** DECIDED (2026-09-21) — upgrade deferred, premise reopened.
 
-## Why — the ask (verbatim)
+## Why
 
-> **Verbatim (Han, 2026-09-21, the opening ask; one sentence of personal context removed
-> 2026-11-25):** "[…] Strategy: become both a user and a contributor to the Vite/Workers seam,
-> using this blog as the real-world deployment that generates the issues.
->
-> This repo: Astro 5 digital garden deployed to Cloudflare Workers, push-to-deploy. Dormant since
-> late July 2026."
-
-> **Verbatim (Han, 2026-09-21, Task 2 as originally scoped):** "Plan an upgrade to latest Vite 8 +
-> current Cloudflare plugin + add oxlint. Keep a running log of everything that breaks, with minimal
-> repros — I want to file the Cloudflare-specific ones upstream."
->
-> "Don't change anything until I approve the plan."
-
-> **Verbatim (Han, 2026-09-21, on the deploy trigger):** "i think there is a github actions
-> connected that deploys when pushed to the main branch"
+2026-09-21: Han's strategy was to become both a user and a contributor at the Vite/Workers seam,
+using this blog, an Astro 5 garden on Cloudflare Workers, dormant since late July 2026, as the
+real deployment that surfaces the issues. Task 2 was to plan an upgrade to Vite 8, the current
+Cloudflare plugin and oxlint, logging every breakage with a minimal repro to file the
+Cloudflare-specific ones upstream, and to change nothing until he approved the plan. He believed a
+GitHub Action deployed on push to `main`.
 
 ## Discussion
 
@@ -153,9 +144,8 @@ Until it is answered, treat the deploy path as unknown rather than as either fil
   the contribution surface, the adapter options above come straight back. If he builds a separate
   Workers project instead, this record becomes the explanation for why the blog stayed static.
 - **oxlint is approved and independent of all of it.** It is also the only thing that would give this
-  repo a real verification gate. Today `npm run build` is the entire verifier, which is why the
-  orchestrator caps this repo at `chore` autonomy
-  (`repos/agentlab/docs/decisions/orchestrator.md`). Landing oxlint is what would make a two-major
+  repo a real verification gate. Today `npm run build` is the entire verifier, which is why
+  automation caps this repo at `chore` autonomy. Landing oxlint is what would make a two-major
   upgrade safe to dispatch rather than something a session has to babysit.
 - **Sequencing is my judgment call, not Han's:** branches first, then oxlint, then any upgrade. The
   reason is that oxlint's baseline should cover whatever code survives the branch decision, rather

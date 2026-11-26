@@ -1,6 +1,9 @@
 ---
 import { getCollection } from "astro:content";
 
+// compact: the smaller card for the bottom of the home page.
+const { compact = false } = Astro.props;
+
 const quotes = (await getCollection("notes")).filter((note) =>
     note.data.tags?.includes("quote")
 );
@@ -38,7 +41,7 @@ const parsedQuotes = quotes
     .filter(({ text }) => Boolean(text));
 ---
 
-<section class="mb-16">
+<section class={compact ? "mb-8" : "mb-16"}>
     <div class="flex justify-between items-baseline mb-4">
         <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-400">
             Quote of the day
@@ -46,14 +49,16 @@ const parsedQuotes = quotes
     </div>
     {parsedQuotes.map(({ text, source, href }, i) => (
         <div data-quote-card style={i > 0 ? "display:none" : undefined}>
-            <div class="relative rounded-lg border border-gray-100 bg-gray-50 px-7 py-6">
-                <div
-                    class="pointer-events-none absolute -top-1 left-4 select-none font-serif text-7xl leading-none text-gray-200"
-                    aria-hidden="true"
-                >
-                    &ldquo;
-                </div>
-                <blockquote class="relative mt-3 text-[0.95rem] leading-relaxed text-gray-700 italic">
+            <div class={`relative rounded-lg border border-gray-100 bg-gray-50 ${compact ? "px-5 py-4" : "px-7 py-6"}`}>
+                {!compact && (
+                    <div
+                        class="pointer-events-none absolute -top-1 left-4 select-none font-serif text-7xl leading-none text-gray-200"
+                        aria-hidden="true"
+                    >
+                        &ldquo;
+                    </div>
+                )}
+                <blockquote class={`relative leading-relaxed text-gray-700 italic ${compact ? "text-sm" : "mt-3 text-[0.95rem]"}`}>
                     {text}
                 </blockquote>
                 {source && (

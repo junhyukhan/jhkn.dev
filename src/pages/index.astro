@@ -2,6 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
 import NoteList from "../components/NoteList.astro";
+import FeaturedCards from "../components/FeaturedCards.astro";
 import QuoteOfDay from "../components/QuoteOfDay.astro";
 import { getFeaturedNotes } from "../utils/noteGrouping";
 
@@ -9,38 +10,26 @@ const pageTitle = "JHKN.DEV";
 const allNotes = await getCollection("notes");
 
 const featuredNotes = getFeaturedNotes(allNotes);
+// Writing only: quotes/ and leetcode/ have their own places and would crowd out the notes.
 const recentNotes = allNotes
+    .filter((note) => note.id.startsWith("general/"))
     .sort((a, b) => b.data.created.valueOf() - a.data.created.valueOf())
-    .slice(0, 3);
+    .slice(0, 5);
+
+const heading = "text-xs font-semibold uppercase tracking-widest text-gray-400";
 ---
 
 <BaseLayout pageTitle={pageTitle}>
     <section class="mb-14">
         <h1 class="text-3xl font-bold mb-3 tracking-tight">Hello.</h1>
         <p class="text-gray-500 leading-relaxed">
-            This is where I document what I learn and build.
+            Where I document what I learn and build.
         </p>
     </section>
 
-    <QuoteOfDay />
-
-    {featuredNotes.length > 0 && (
-        <section class="mb-16">
-            <div class="flex justify-between items-baseline mb-8">
-                <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-400">
-                    Featured Work
-                </h2>
-            </div>
-
-            <NoteList notes={featuredNotes} />
-        </section>
-    )}
-
-    <section>
+    <section class="mb-16">
         <div class="flex justify-between items-baseline mb-8">
-            <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-400">
-                Recent Notes
-            </h2>
+            <h2 class={heading}>Recent Writing</h2>
             <a
                 href="/notes"
                 class="text-xs text-gray-400 hover:text-gray-700 hover:no-underline transition-colors duration-200"
@@ -51,4 +40,13 @@ const recentNotes = allNotes
 
         <NoteList notes={recentNotes} />
     </section>
+
+    {featuredNotes.length > 0 && (
+        <section class="mb-16">
+            <h2 class={`${heading} mb-8`}>Featured</h2>
+            <FeaturedCards notes={featuredNotes} />
+        </section>
+    )}
+
+    <QuoteOfDay compact />
 </BaseLayout>

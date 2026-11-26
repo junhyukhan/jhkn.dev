@@ -1,7 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getNoteTitle } from "../../utils/note";
+import { getNoteSummary, getNoteTitle } from "../../utils/note";
 import { buildBacklinksWithContextMap } from "../../utils/backlinks";
 import TagList from "../../components/TagList.astro";
 import Backlinks from "../../components/Backlinks.astro";
@@ -22,7 +22,12 @@ const { Content } = await render(entry);
 const title = getNoteTitle(entry);
 ---
 
-<BaseLayout pageTitle={title}>
+<BaseLayout
+    pageTitle={title}
+    description={getNoteSummary(entry.body ?? "", 160) || undefined}
+    type="article"
+    published={entry.data.created}
+>
     <article class="prose prose-slate max-w-none">
         <header class="mb-10">
             <h1 class="text-2xl font-bold mb-2 tracking-tight">{title}</h1>

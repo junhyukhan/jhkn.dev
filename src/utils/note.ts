@@ -23,8 +23,10 @@ export function getNoteSummary(body: string, max = 200): string {
         .replace(/\[\[([^\]]*)\]\]/g, "$1")
         .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")  // Markdown links
         .replace(/<[^>]+>/g, " ")                 // HTML
-        .replace(/^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+/gm, "") // headings, quotes, list markers
+        .replace(/\[[ xX]\][ \t]+/g, "")         // task checkboxes
+        .replace(/^[ \t]{0,3}(?:(?:#{1,6}|>|[-*+]|\d+\.)[ \t]+)+/gm, "") // headings, quotes, list markers
         .replace(/[*_~]{1,3}([^*_~]+)[*_~]{1,3}/g, "$1")   // emphasis
+        .replace(/(^|\s)#[\p{L}\p{N}_/-]+/gu, "$1")       // Obsidian inline tags
         .replace(/\s+/g, " ")
         .trim();
     if (text.length <= max) return text;

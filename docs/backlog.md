@@ -31,26 +31,6 @@ belongs in `decisions/`.
   seven *merged* branches sat alongside it and made the list look like noise, which is why branch
   cleanup is now part of session end (`repos/docs/decisions/git-workflow.md`).
 
-- [ ] **Home page — featured and recent sections, branch deleted 2026-09-22.** Three changes, all
-  to the home page's two lists:
-
-  1. **Recent excludes the sub-collections.** `quotes/` and `leetcode/` notes are filtered out of
-     the recent list, so the home page shows actual writing rather than whatever synced last.
-  2. **Recent shows 5, not 3.**
-  3. **Featured Work becomes cards.** Instead of rendering the plain `NoteList` rows, each featured
-     note gets a bordered card carrying its title, its ISO creation date, and its tags as chips.
-     `NoteList` itself gained an optional `showTags` prop that renders tags under the title, so the
-     plain list can opt into the same information without the card chrome.
-
-  **Captured here on 2026-09-22 specifically so the branch could be deleted.** It was the one stale
-  branch with no record at all. 52 insertions, 11 deletions across `src/pages/index.astro` and
-  `src/components/NoteList.astro`, on `origin/claude/improve-home-page-xKxSv` (`73370ac`,
-  2026-03-18), never merged. Same rule and the same warning as above: the SHA is not a recovery
-  path, and the code is meant to be rebuilt rather than restored.
-
-  **No reason for the stall was recorded here either.** The two branches are six months old and
-  unrelated to each other; nothing suggests either was abandoned on purpose.
-
 - [ ] **Add oxlint — approved 2026-09-21, not started.** Independent of the deferred upgrade, and
   worth doing on its own: `npm run build` is currently the repo's entire verification gate, which is
   why the orchestrator caps this repo at `chore` autonomy. A real linter is what would make a large

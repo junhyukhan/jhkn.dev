@@ -1,0 +1,11 @@
+[Unit]
+Description=Publish blog notes from the vault to jhkn.dev main
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-%h/.config/blog-publish.env
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=%h/workdir/repos/jhkn.dev/ops/publish.sh
+NoNewPrivileges=true

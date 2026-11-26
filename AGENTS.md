@@ -21,8 +21,8 @@ Personal blog/digital garden built with Astro, deployed to Cloudflare Workers (p
 ## Docs
 
 Project state and decisions live in `docs/` — start at **`docs/README.md`** (status + index).
-Design decisions are captured **verbatim** in `docs/decisions/` (one file per topic; copy
-`docs/decisions/TEMPLATE.md`). This is the workspace-wide shape — see
+Design decisions live in `docs/decisions/` (one file per topic; copy `docs/decisions/TEMPLATE.md`):
+the decision and its reason, quoting Han only where the wording carries intent. This is the workspace-wide shape — see
 `../docs/repo-docs-standardization.md`.
 
 ## Commands
@@ -34,7 +34,11 @@ npm run build        # Build to ./dist/
 npm run preview      # Preview production build locally
 npm run deploy       # Deploy to Cloudflare Workers (wrangler deploy)
 npm run publish      # Clean, build, and deploy (full publish flow)
+systemctl --user start blog-publish   # On the workstation: sync, build, commit, push (ops/publish.sh)
 ```
+
+"Publish the blog" means `systemctl --user start blog-publish` on the workstation; check the result
+with `journalctl --user -u blog-publish -n 20`. It runs nightly from `blog-publish.timer` too.
 
 ## Architecture
 

@@ -15,21 +15,23 @@
 # Two published notes with the same filename in one destination is an error.
 # Only Markdown is copied: a published note that embeds a file gets a warning.
 #
-# Paths come from .env (gitignored; keys in .env.example):
+# Paths come from the environment, or else from .env (gitignored; keys in .env.example):
 #   VAULT_PATH         vault root, e.g. .../Documents/jhkn
 #   REPO_CONTENT_PATH  dest, e.g. ./src/content
 set -euo pipefail
 
 ENV_FILE="./.env"
-if [ ! -f "$ENV_FILE" ]; then
-    echo "$ENV_FILE not found. Expected VAULT_PATH and REPO_CONTENT_PATH (see .env.example)." >&2
-    exit 1
+if [ -z "${VAULT_PATH:-}" ] || [ -z "${REPO_CONTENT_PATH:-}" ]; then
+    if [ ! -f "$ENV_FILE" ]; then
+        echo "VAULT_PATH and REPO_CONTENT_PATH are not set and $ENV_FILE is missing (see .env.example)." >&2
+        exit 1
+    fi
+    # shellcheck disable=SC1090
+    source "$ENV_FILE"
 fi
-# shellcheck disable=SC1090
-source "$ENV_FILE"
 
 if [ -z "${VAULT_PATH:-}" ] || [ -z "${REPO_CONTENT_PATH:-}" ]; then
-    echo "VAULT_PATH and REPO_CONTENT_PATH must both be set in $ENV_FILE (see .env.example)." >&2
+    echo "VAULT_PATH and REPO_CONTENT_PATH must both be set (see .env.example)." >&2
     exit 1
 fi
 VAULT_PATH="${VAULT_PATH%/}"
